@@ -24,7 +24,7 @@ sudo apt-get remove libopencv*
 
 3. install the required repository dependencies:
 ```bash
-sudo apt-get update && sudo apt install -y ffmpeg python3-dev cmake ninja-build
+sudo apt-get update && sudo apt install -y ffmpeg python3-dev cmake ninja-build libeigen3-dev libboost-all-dev
 ```
 
 4. Install the custom OpenCV package:

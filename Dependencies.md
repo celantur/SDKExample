@@ -40,7 +40,7 @@ Please note that the CUDA version on your machine is tied to the TensorRT versio
 #### x86_64
 Celantur-go-to version of Tensort (that is provided with `celantur-tensorrt` package) is 10.0. Two different versions of TensorRT support CUDA `11` and `12` respectively. Celantur provided package expects you to have CUDA 11. If you have a different version of CUDA installed, ask Celantur for the correct version of TensorRT.
 #### Jetson
-Jetson has narrower support for TensorRT versions that are tied to your Jetpack version. The minimal requirement of `8.5` translates into JetPack version `5.1.2`. Newer versions of JetPack (starting from `6.0`) support TensorRT `10.0`. 
+Jetson has narrower support for TensorRT versions that are tied to your Jetpack version. The minimal requirement of `8.5` translates into JetPack version `5.1.2`. Newer versions of JetPack (starting from `6.0`) support TensorRT `10.0`. Each downgrade basically corresponds to the less features in the SDK.
 
 ** Important **: some features of the SDK might not work with the older versions of TensorRT versions. The machine learning is a fast-evolving field and we are constantly updating our models and SDK to provide the best possible performance.
 

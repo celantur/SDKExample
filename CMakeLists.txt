@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(celantur_sdk_example LANGUAGES CXX)
 
+# We use std::filesystem, but feel free to downgrade if you need to; 
 set(CMAKE_CXX_STANDARD 17)
 find_package(OpenCV REQUIRED )
 
@@ -9,8 +10,8 @@ find_package(OpenCV REQUIRED )
 find_package(CppProcessing REQUIRED)
 
 # In case there is some incompatibily between versions of OpenCV and Eigen, add the following definition to CMAKE
+# Sometimes happens on x86_64 machines, not confident about the reason
 add_definitions(-DOPENCV_DISABLE_EIGEN_TENSOR_SUPPORT)
-
 
 add_executable(celantur_sdk_example main.cpp)
 target_link_libraries(celantur_sdk_example CppProcessing::processing ${OpenCV_LIBS})
