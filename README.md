@@ -40,14 +40,38 @@ sudo apt install ./celantur-cpp-processing*.deb
 ## Compile 
 ```bash
 mkdir -p build && cd build
-cmake -GNinja -DCMAKE_INSTALL_PREFIX=/path/to/install/ ..
+cmake -GNinja -DCMAKE_INSTALL_PREFIX=path/to/install/ ..
 ninja && ninja install
 ```
 
-### Possible issues
-CppProcessing is not found: Add `-DCppProcessing_DIR=/usr/local/lib/cmake` to the cmake configuration.
+### Troubleshooting
+
+#### CppProcessing is not found
+
+```
+CMake Error at CMakeLists.txt:10 (find_package):
+  By not providing "FindCppProcessing.cmake" in CMAKE_MODULE_PATH this
+  project has asked CMake to find a package configuration file provided by
+  "CppProcessing", but CMake did not find one.
+
+  Could not find a package configuration file provided by "CppProcessing"
+  with any of the following names:
+
+    CppProcessingConfig.cmake
+    cppprocessing-config.cmake
+
+  Add the installation prefix of "CppProcessing" to CMAKE_PREFIX_PATH or set
+  "CppProcessing_DIR" to a directory containing one of the above files.  If
+  "CppProcessing" provides a separate development package or SDK, be sure it
+  has been installed.
+
+```
+
+#### Solution
+
+ Add `-DCppProcessing_DIR=/usr/local/lib/cmake` to the cmake configuration.
 ```bash
-cmake -GNinja -DCMAKE_INSTALL_PREFIX=/path/to/install/ -DCppProcessing_DIR=/usr/local/lib/cmake ..
+cmake -GNinja -DCMAKE_INSTALL_PREFIX=path/to/install/ -DCppProcessing_DIR=/usr/local/lib/cmake ..
 ```
 
 ## Compile model
@@ -92,6 +116,25 @@ Last two parameters denote minimum/optimum/maximum model resolution of dynamic m
 
 Won't work if your TensorRT version is less than 10. If it is the case, please always use `1280:1280:1280` since in the earlier TensorRT versions a bug exists, that will make model with the same input to output some gibberish.
 
+### Troubleshooting
+
+#### Unable to load library
+
+```
+Using precision FP32 and optimisation level 0
+Creating builder
+6: [libLoader.cpp::Impl::291] Error Code 6: Internal Error (Unable to load library: libnvinfer_builder_resource.so.10.0.1: libnvinfer_builder_resource.so.10.0.1: cannot open shared object file: No such file or directory)
+Segmentation fault (core dumped)
+```
+
+#### Solution
+
+Add `/usr/local/lib` to `LD_LIBRARY_PATH`.
+
+```
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/
+```
+
 ## Run the SDK example
 Finally, you can use compiled model to anonymise any image:
 ```bash
@@ -99,9 +142,18 @@ cd path/to/install
 ./celantur_sdk_example test-img.jpg path/to/tensorrt-output.trt
 ```
 
-### Possible issues
-If the following error appears: `./celantur_sdk_example: error while loading shared libraries: libprocessing.so: cannot open shared object file: No such file or directory`
+### Troubleshooting
+
+#### Error loading shared libraries
+
+```
+./celantur_sdk_example: error while loading shared libraries: libprocessing.so: cannot open shared object file: No such file or directory`
+```
+
+#### Solution
+
 Add the library path to the install celantur library:
+
 ```bash
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/
 ```
