@@ -7,10 +7,11 @@ find_package(CppProcessing REQUIRED CelanturSDK common-module)
 
 message("Cpp Processing libraries found: ${CppProcessing_LIBRARIES}")
 
-# Add tests here
 add_executable(quickstart quickstart.cpp)
-
-#Link the example
 target_link_libraries(quickstart PRIVATE CppProcessing::core CppProcessing::CelanturSDK ${OpenCV_LIBS})
 
-install(TARGETS quickstart RUNTIME )
+add_executable(processor_parameters_detail processor_parameters_detail.cpp)
+target_link_libraries(processor_parameters_detail PRIVATE CppProcessing::core CppProcessing::CelanturSDK ${OpenCV_LIBS})
+
+add_executable(decoding_encoding decoding_encoding.cpp)
+target_link_libraries(decoding_encoding PRIVATE CppProcessing::core CppProcessing::CelanturSDK ${OpenCV_LIBS})
