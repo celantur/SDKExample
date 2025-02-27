@@ -1,23 +1,16 @@
 cmake_minimum_required(VERSION 3.10)
-project(celantur_sdk_example LANGUAGES CXX)
+Project(CelanturSDKExample LANGUAGES CXX)
 
-# We use std::filesystem, but feel free to downgrade if you need to; 
-set(CMAKE_CXX_STANDARD 17)
-find_package(OpenCV REQUIRED )
+find_package(OpenCV REQUIRED)
+find_package(Boost COMPONENTS json log REQUIRED)
+find_package(CppProcessing REQUIRED CelanturSDK common-module) 
 
-# If can't find the package, add the folliwind definition to CMAKE:
-# -DCppProcessing_DIR=/usr/local/lib/cmake or the path where the package is installed
-find_package(CppProcessing REQUIRED)
+message("Cpp Processing libraries found: ${CppProcessing_LIBRARIES}")
 
-# In case there is some incompatibily between versions of OpenCV and Eigen, add the following definition to CMAKE
-# Sometimes happens on x86_64 machines, not confident about the reason
-add_definitions(-DOPENCV_DISABLE_EIGEN_TENSOR_SUPPORT)
+# Add tests here
+add_executable(quickstart quickstart.cpp)
 
-add_executable(celantur_sdk_example main.cpp)
-target_link_libraries(celantur_sdk_example CppProcessing::processing ${OpenCV_LIBS})
+#Link the example
+target_link_libraries(quickstart PRIVATE CppProcessing::core CppProcessing::CelanturSDK ${OpenCV_LIBS})
 
-install(TARGETS celantur_sdk_example DESTINATION .)
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/test/test-img.jpg DESTINATION .)
-
-
-
+install(TARGETS quickstart RUNTIME )
