@@ -9,12 +9,12 @@ const std::filesystem::path exe_path = boost::dll::program_location().parent_pat
 const std::filesystem::path cpu_plugin_location = "/usr/local/lib/libONNXInference.so";
 const std::filesystem::path license_file = exe_path/"license";
 const std::filesystem::path image_path = exe_path/"image.jpg";
-const std::filesystem::path out_image_path = exe_path/"quickstart_out.jpg"; 
+const std::filesystem::path out_image_path = exe_path/"inference_tinkering.jpg"; 
 const std::filesystem::path model_path = exe_path/"yolov8_all_1280_medium_v1_static.onnx.enc"; 
 
 /**
-    The purpose of this example is to show the quickest and easiest way on how to use the CelanturSDK to anonymise an image, running everything on the CPU.
-    For the purpose of this beginner tutorial, we use OpenCV to load and save images. Note that OpenCV loads images by default in the BGR format, while the Celantur SDK uses RGB.
+    The purpose of this example is to show the options one can tinker with using CPU inference engine.
+    Some of the settings might be internal and therefore not documented. 
  */
 
 int main(int argc, char** argv) {
@@ -30,9 +30,22 @@ int main(int argc, char** argv) {
     // Start the processor with given parameters and license file
     CelanturSDK::Processor processor(params, license_file);
 
-    // Load the inference model. Should be provided by Celantur
+    // Get the available inference engine settings and their default values
+    celantur::InferenceEnginePluginSettings settings = processor.get_inference_settings();
+    std::cout << "Inference engine parameters:" << std::endl;
+    for (const std::pair<std::string, std::any>& pair : settings) {
+        std::cout << pair.first  << std::endl;
+    }
+    
+    // set the number of inference threads to 1 to limit inference engine to work with only one thread; value of 0 means that the engine will use all available threads
+    settings["n_intra_threads"] = 1;
+    settings["n_outer_threads"] = 1;
+    // set the optimisation level of the model to the highest (Already set by default)
+    settings["optimisation_level"] = celantur::OptimisationLevel::Full;
+
+    // Load the inference model. Should be provided by Celantur; the settings are provided to the load_inference_model function
     std::cout << "load model from " << model_path << std::endl;
-    processor.load_inference_model(model_path);
+    processor.load_inference_model(model_path, settings);
 
     // Load some image for processing
     std::cout << "loading image from " << image_path << std::endl;
