@@ -10,7 +10,7 @@ const std::filesystem::path cpu_plugin_location = "/usr/local/lib/libONNXInferen
 const std::filesystem::path license_file = exe_path/"license";
 const std::filesystem::path image_path = exe_path/"image.jpg";
 const std::filesystem::path out_image_path = exe_path/"quickstart_out.jpg"; 
-const std::filesystem::path model_path = exe_path/"yolov8_all_1280_medium_v1_static.onnx.enc"; 
+const std::filesystem::path model_path = exe_path/"yolov8_all_1280_medium_v4_static.onnx.enc"; 
 
 /**
     The purpose of this example is to show the quickest and easiest way on how to use the CelanturSDK to anonymise an image, running everything on the CPU.
