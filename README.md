@@ -1,114 +1,42 @@
 # SDKExample
 
-## First setup
-This is a simple example of how to use the Celantur SDK. The SDK is a library that allows you to easily integrate Celantur's anonymisation services into your app. To start, you will need to receive several things from Celantur:
-1. Model file
-2. Custom-made OpenCV debian package `celantur-opencv.deb`. This package is a modified version of OpenCV 4.7.0 that includes the necessary functions for the SDK to work. 
-3. Celantur SDK library for C++, `celantur-cpp-processing.deb`
-4. Depending on your system you might also get a `celantur-tensorrt.deb` package. If you already have TensorRT installed on your system, you can skip this step.
+## General
+In this repository one can find a lot of example code that is used to use Celantur SDK. SDK consists of several shared objects and include files, that can be linked against and included in your program to use the functionality.
 
-Make sure that your system has CUDA installed. Celantur does not impose any specific version of CUDA, but there can be incompatibilities with different versions of TensorRT. Read more about this in the [Dependencies.md](Dependencies.md).
-
-## Known dependency limitations
-- You can read more about the dependencies in the [Dependencies.md](Dependencies.md).
-
-## Installing dependencies
-1. *Not necessary* if not needed remove the `python2` dependencies that might create conflicts with the SDK:
+The easiest way to integrate the functionality is using the cmake. Add the `findPackage` directive to find the celantur library and link targets into your program, e.g.:
 ```bash
-sudo apt remove python2* libpython2*
+find_package(CppProcessing REQUIRED CelanturSDK common-module) 
+...
+target_link_libraries(YourExecutableOrLibrary PRIVATE CppProcessing::CelanturSDK CppProcessing::common-module)
 ```
-2. Remove preinstalled **OpenCV** since we will use a custom version (read more about it [Dependencies.md](Dependencies.md)):
-```bash
-sudo apt-get remove libopencv*
-```
-
-3. install the required repository dependencies:
-```bash
-sudo apt-get update && sudo apt install -y ffmpeg python3-dev cmake ninja-build libeigen3-dev libboost-all-dev
-```
-
-4. Install the custom OpenCV package:
-```bash
-sudo apt install ./celantur-opencv*.deb
-```
-
-5. Install the Celantur SDK:
-```bash
-sudo apt install ./celantur-cpp-processing*.deb
-```
-
-## Compile 
-```bash
-mkdir -p build && cd build
-cmake -GNinja -DCMAKE_INSTALL_PREFIX=/path/to/install/ ..
-ninja && ninja install
-```
-
-### Possible issues
-CppProcessing is not found: Add `-DCppProcessing_DIR=/usr/local/lib/cmake` to the cmake configuration.
-```bash
-cmake -GNinja -DCMAKE_INSTALL_PREFIX=/path/to/install/ -DCppProcessing_DIR=/usr/local/lib/cmake ..
-```
-
-## Compile model
-Before running the example, one needs to compile the model. The model that Celantur provides is in universal, 
-hardware independent format `.onnx`. However, to achieve the best performance we use the inference engine of 
-NVidia called **TensorRT**. 
-
-There are few parameters that may or may not be supported on all **TensorRT** versions:
-1. If the version is higher than `8.6`, you can set *builder optimisation level*.
-2. If the version is higher than `10`, dynamic model resolution will be supported.
-
-To convert model from `.onnx` to `.trt` one need to compile it. Compiling the model in the context of Machine Learning
-means finding the best possible deployment on a given hardware and as such, must be performed on a target hardware.
-Model conversion needs to be done only once per hardware for any given set of parameters.
-
-To compile the model, use the following cli command:
-```bash
-/usr/local/bin/create_trt_from_onnx path/to/onnx.onnx \
-                                    path/to/tensorrt-output.trt \
-                                    <precision> \
-                                    <builder optimisation> \
-                                    width=min:opt:max \
-                                    height=min:opt:max
-```
-
-Before going over all parameters, we can provide some "safe" config which one can use as to quickly run the SDK example without setting it up too much:
+For an example, use the `CMakeLists.txt` in this repository.
 
 ```bash
-/usr/local/bin/create_trt_from_onnx path/to/onnx.onnx \
-                                    path/to/tensorrt-output.trt \
-                                    FP32 \
-                                    0 \
-                                    width=1280:1280:1280 \
-                                    height=1280:1280:1280
+cmake -S /path/to/your/program/ -B /path/to/build/dir/ 
 ```
 
-First parameter in the list, `<precision>` has a two options `FP16` and `FP32`. It sets the recommended precision and performance of the resulting model. `FP16` on average will be faster but less precise, `FP32` will be more precise but less performant.
-
-Second parameter, `<builder optimisation>`, denotes the optimisation of the resulting model. Can be values from 0 to 5. The higher it is, the longer the model compilation will take, but the faster the inference phase will be. If you have **TensorRT** version < `8.6` this parameter will not influence the result, but still needs to be provided.
-
-Last two parameters denote minimum/optimum/maximum model resolution of dynamic model. We suggest to start with fixed resolution `1280:1280:1280` and figure out if different resolution is needed later. The larger the resolution is, the bigger image the model can process without loss of precision.
-
-Won't work if your TensorRT version is less than 10. If it is the case, please always use `1280:1280:1280` since in the earlier TensorRT versions a bug exists, that will make model with the same input to output some gibberish.
-
-## Run the SDK example
-Finally, you can use compiled model to anonymise any image:
+The dependencies are installed into the `/usr/local/` prefix. If the cmake `findPackage` returns an error, manually provide the path to the cmake file:
 ```bash
-cd path/to/install
-./celantur_sdk_example test-img.jpg path/to/tensorrt-output.trt
+cmake -S /path/to/your/program/ -B /path/to/build/dir/ -DCppProcessing_DIR=/usr/local/lib/cmake
 ```
 
-### Possible issues
-If the following error appears: `./celantur_sdk_example: error while loading shared libraries: libprocessing.so: cannot open shared object file: No such file or directory`
-Add the library path to the install celantur library:
-```bash
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/
-```
+### Module overview
+Normally, one needs two plugins to use SDK. First is `CppProcessing::CelanturSDK` that consists of the general interfaces to the SDK and used as entry point for interaction with it. Another one is `CppProcessing::common-module` and it consists of multiple definitions, classes and structures that are exposed to the user since they are common between our internal code and SDK.
 
-Or edit the [runpath](https://blogs.oracle.com/solaris/post/changing-elf-runpaths-code-included)
+Other shared objects do not provide the include files and are just passive dependency to the `CelanturSDK` shared object. Because of that, they are not really interesting to the end user.
 
+### Plugin overview
+Different modes of work require different dependencies installed on the target machine. For example, `libONNXInference.so` depends on [ONNX](https://onnx.ai/) to run the detection on the CPU. On the other hand, `libTensorRTRuntime.so` depends on Nvidia and CUDA libraries to provide detections on the GPU. To avoid having hard dependencies to these libraries, we use the plugin system where the dependencies are encapsulated in the plugin that is being loaded at runtime. You need to load at least one inference engine plugin for the SDK to work, which is quite straightforward and covered in tutorials.
 
+### Architecture overview
+The main class the user is interested in is `CelanturSDK::Processor` class. It provides the interface to the anonymisation library. To create the instance of this class one needs:
+1. `ProcessorParams` class that has instantiated at least the `inference_plugin` field.
+2. `license_path` variable that points to the valid instance of the license.
 
+After creating the processor, one needs to load an inference model. This is also quite straightforward. Once can have different models optimised for different use-cases so this step is also necessary to get to the working processor. Note that the way model are treated are very different for different inference engines. CPU mode is very straightforward and just uses the provided Celantur model. For other inference engines refer to the documentation of the particular modes. This complexity is necessary, since some of the inference engines we use have a strong optimisation routines that optimise the model for the particular set of hardware the user runs it on.
 
-                                
+Finally, after one have a valid instance of `Processor`, one can use following functions to perform anonymisation:
+1. `process` to post a new image to processing. The function is not blocking and returns control immediately after posting the image to the processing queue.
+2. `get_result` to get the next anonymised image from the queue.
+3. `get_detections` to get the list of detections that were detected. One can use them e.g. to debug the results, display detections or create metadata json similar to Celantur container.
+
