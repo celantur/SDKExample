@@ -14,8 +14,8 @@ const std::filesystem::path out_image_path = exe_path/"detections_and_thresholds
 const std::filesystem::path model_path = exe_path/"yolov8_all_1280_medium_v4_static.onnx.enc"; 
 
 /**
-    The purpose of this example is to show the quickest and easiest way on how to use the CelanturSDK to anonymise an image, running everything on the CPU.
-    For the purpose of this beginner tutorial, we use OpenCV to load and save images. Note that OpenCV loads images by default in the BGR format, while the Celantur SDK uses RGB.
+    This example expands on the quickstart example by showing how to set different thresholds for different classes.
+    Also, it shows an example how to visualise detections for better debugging
  */
 
 int main(int argc, char** argv) {
