@@ -54,6 +54,9 @@ int main(int argc, char** argv) {
 
     // Get the result
     cv::Mat out = processor.get_result();
+    
+    // Discard the detections. Necessary to free up the memory. 
+    processor.get_detections();
 
     // Encode the image back together with metadata. Notice the std::move to transfer the ownership of the metadata to the encoder. We are using thin wrapper around exiflib to handle the metadata and there is no copy constructor defined
     std::vector<unsigned char> encoded_image = celantur::jpeg_encode(out, 95, std::move(metadata));

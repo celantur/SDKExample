@@ -43,6 +43,9 @@ int main(int argc, char** argv) {
 
     // Get the result
     cv::Mat out = processor.get_result();
+    
+    // Discard the detections. Necessary to free up the memory. 
+    processor.get_detections();
 
     // Save the result
     std::cout << "saving result to " << out_image_path << std::endl;

@@ -18,3 +18,6 @@ target_link_libraries(decoding_encoding PRIVATE CppProcessing::CelanturSDK CppPr
 
 add_executable(inference_tinkering inference_tinkering.cpp)
 target_link_libraries(inference_tinkering PRIVATE CppProcessing::CelanturSDK CppProcessing::common-module)
+
+add_executable(detections_and_thresholds detections_and_thresholds.cpp)
+target_link_libraries(detections_and_thresholds PRIVATE CppProcessing::CelanturSDK CppProcessing::common-module)
