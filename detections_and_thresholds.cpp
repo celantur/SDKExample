@@ -2,8 +2,10 @@
 #include "CelanturSDKInterface.h"
 #include "CommonParameters.h"
 #include <filesystem>
+#include <fstream>
 #include <opencv2/opencv.hpp>
 #include <boost/dll.hpp>
+#include <sstream>
 #include "detections-utils.h"
 
 const std::filesystem::path exe_path = boost::dll::program_location().parent_path().string();
@@ -54,6 +56,18 @@ int main(int argc, char** argv) {
     // Get the detections and draw them on the image
     std::vector<celantur::CelanturDetection> dets = processor.get_detections();
     cv::Mat result = celantur::visualise_detections(out, dets);
+
+    // output metrics to file
+    std::ofstream metadata_json_file(exe_path/"metadata.json");
+    serialise_image_metrics_to_json(out, dets, "input_image_name", "input_folder", metadata_json_file);
+
+    // save metrics as a string
+    std::stringstream metadata_json_str;
+    serialise_image_metrics_to_json(out, dets, "input_image_name", "input_folder", metadata_json_str);
+    std::cout << "metadata json: " << metadata_json_str.str() << std::endl;
+    
+
+
 
     // Save the result
     std::cout << "saving result to " << out_image_path << std::endl;
