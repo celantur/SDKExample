@@ -8,8 +8,6 @@ automatic anonymisation of faces and license plates.
 In this repository you find a lot of example code how to use [Celantur SDK](https://doc.celantur.com/sdk/getting-started).
 
 
-You 
-
 ## Prerequisite
 
 The SDK consists of several shared objects and include files, 
