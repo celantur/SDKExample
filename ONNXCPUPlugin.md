@@ -26,5 +26,5 @@ apt install ./celantur-cpp-processing-<your-distro>.deb
 ## Usage
 1. Load the CPU processing plugin, by specifying `ProcessorParams.inference_plugin = /usr/local/lib/libONNXInference.so;`
 2. Load the inference model (file ending with `.onnx.enc`) using `CelanturSDK::Processor.load_inference_model`.
-4. After initialising the processor class, you can start anonymisuing images. 
+3. After initialising the processor class, you can start anonymisuing images. 
    More settings and tinkering are available in different examples in this repository.
