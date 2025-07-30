@@ -5,6 +5,7 @@ default:
 
 build:
     #!/bin/bash
+    set -e
     mkdir -p build
     cd build
     cmake -DCMAKE_BUILD_TYPE=Release \
@@ -12,5 +13,7 @@ build:
     	  -DCppProcessing_DIR={{sdk_install_dir}} \
     	  ..
     ninja
+
+    echo {{GREEN}}DONE!{{NORMAL}}
 
 
