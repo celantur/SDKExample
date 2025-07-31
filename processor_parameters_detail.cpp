@@ -6,11 +6,13 @@
 #include <boost/dll.hpp>
 
 const std::filesystem::path exe_path = boost::dll::program_location().parent_path().string();
+const std::filesystem::path assets_path = exe_path/".."/"assets";
+const std::filesystem::path output_path = exe_path/".."/"output";
 const std::filesystem::path cpu_plugin_location = "/usr/local/lib/libONNXInference.so";
-const std::filesystem::path license_file = exe_path/"license";
-const std::filesystem::path image_path = exe_path/"image.jpg";
-const std::filesystem::path out_image_path = exe_path/"processor_detail_out.jpg"; 
-const std::filesystem::path model_path = exe_path/"yolov8_all_1280_medium_v4_static.onnx.enc"; 
+const std::filesystem::path license_file = assets_path/"license";
+const std::filesystem::path image_path = assets_path/"image.jpg";
+const std::filesystem::path out_image_path = output_path/"processor_detail_out.jpg"; 
+const std::filesystem::path model_path = assets_path/"yolov8_all_1280_medium_v6_static.onnx.enc"; 
 
 
 /**
@@ -19,6 +21,7 @@ const std::filesystem::path model_path = exe_path/"yolov8_all_1280_medium_v4_sta
  */
 
 int main(int argc, char** argv) {
+    std::filesystem::create_directories(output_path);
     celantur::ProcessorParams params;
     
     // Manually point to the CPU inference plugin
@@ -46,7 +49,8 @@ int main(int argc, char** argv) {
 
     // Load the inference model. Should be provided by Celantur
     std::cout << "load model from " << model_path << std::endl;
-    processor.load_inference_model(model_path);
+    celantur::InferenceEnginePluginSettings settings = processor.get_inference_settings(model_path);
+    processor.load_inference_model(settings);
 
     // Load some image for processing
     std::cout << "loading image from " << image_path << std::endl;

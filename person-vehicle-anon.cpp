@@ -11,24 +11,35 @@ const std::filesystem::path output_path = exe_path/".."/"output";
 const std::filesystem::path cpu_plugin_location = "/usr/local/lib/libONNXInference.so";
 const std::filesystem::path license_file = assets_path/"license";
 const std::filesystem::path image_path = assets_path/"image.jpg";
-const std::filesystem::path out_image_path = output_path/"quickstart_out.jpg"; 
+const std::filesystem::path out_image_path = output_path/"segment-person-vehicle.jpg"; 
 const std::filesystem::path model_path = assets_path/"yolov8_all_1280_medium_v6_static.onnx.enc"; 
 
+
 /**
-    The purpose of this example is to show the quickest and easiest way on how to use the CelanturSDK to anonymise an image, running everything on the CPU.
-    For the purpose of this beginner tutorial, we use OpenCV to load and save images. Note that OpenCV loads images by default in the BGR format, while the Celantur SDK uses RGB.
+    The purpose of this example is to dive more into the parameters that can be set when creating a Processor object.
+    These are responsible for the tiling and for the region of interest (ROI) that the image will be processed in.
  */
 
 int main(int argc, char** argv) {
     std::filesystem::create_directories(output_path);
     celantur::ProcessorParams params;
-
+    
     // Manually point to the CPU inference plugin
     params.inference_plugin = cpu_plugin_location;
     std::cout << "Looking for license at " << license_file << std::endl;
 
-    // OpenCV uses by default BGR, but the Celantur SDK uses RGB so we need to set swapRB to true
-    params.swapRB = true; 
+    const celantur::PerTypeProcessingConfig anonymisation_config
+    (
+        {
+            {celantur::CelanturClassId::LicensePlate, {celantur::BlurType::None}},
+            {celantur::CelanturClassId::Person, {celantur::BlurType::Segmentation}},
+            {celantur::CelanturClassId::Face, {celantur::BlurType::None}},
+            {celantur::CelanturClassId::Vehicle, {celantur::BlurType::Segmentation}},
+        }
+    );
+
+    params.per_type_processing_config = anonymisation_config;
+    params.swapRB = true; // OpenCV uses by default BGR, but the Celantur SDK uses RGB
 
     // Start the processor with given parameters and license file
     CelanturSDK::Processor processor(params, license_file);
@@ -47,7 +58,7 @@ int main(int argc, char** argv) {
 
     // Get the result
     cv::Mat out = processor.get_result();
-    
+
     // Discard the detections. Necessary to free up the memory. 
     processor.get_detections();
 
@@ -57,3 +68,4 @@ int main(int argc, char** argv) {
 
     return 0;
 }
+
