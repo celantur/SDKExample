@@ -24,3 +24,6 @@ target_link_libraries(detections_and_thresholds PRIVATE CppProcessing::CelanturS
 
 add_executable(inference_tinkering_openvino inference_tinkering_openvino.cpp)
 target_link_libraries(inference_tinkering_openvino PRIVATE CppProcessing::CelanturSDK CppProcessing::common-module)
+
+add_executable(person-vehicle-anon person-vehicle-anon.cpp)
+target_link_libraries(person-vehicle-anon PRIVATE CppProcessing::CelanturSDK CppProcessing::common-module)
