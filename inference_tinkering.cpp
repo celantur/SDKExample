@@ -12,7 +12,7 @@ const std::filesystem::path cpu_plugin_location = "/usr/local/lib/libONNXInferen
 const std::filesystem::path license_file = assets_path/"license";
 const std::filesystem::path image_path = assets_path/"image.jpg";
 const std::filesystem::path out_image_path = output_path/"inference_tinkering.jpg"; 
-const std::filesystem::path model_path = assets_path/"yolov8_all_1280_medium_v4_static.onnx.enc"; 
+const std::filesystem::path model_path = assets_path/"yolov8_all_1280_medium_v6_static.onnx.enc"; 
 
 /**
     The purpose of this example is to show the options one can tinker with using CPU inference engine.
