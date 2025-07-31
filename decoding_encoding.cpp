@@ -37,7 +37,8 @@ int main(int argc, char** argv) {
 
     // Load the inference model. Should be provided by Celantur
     std::cout << "load model from " << model_path << std::endl;
-    processor.load_inference_model(model_path);
+    celantur::InferenceEnginePluginSettings settings = processor.get_inference_settings(model_path);
+    processor.load_inference_model(settings);
 
     // Load the image binary
     std::ifstream image_file(image_path, std::ios::binary);

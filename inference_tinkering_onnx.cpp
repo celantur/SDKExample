@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
     CelanturSDK::Processor processor(params, license_file);
 
     // Get the available inference engine settings and their default values
-    celantur::InferenceEnginePluginSettings settings = processor.get_inference_settings();
+    celantur::InferenceEnginePluginSettings settings = processor.get_inference_settings(model_path);
     std::cout << "Inference engine parameters:" << std::endl;
     for (const std::pair<std::string, std::any>& pair : settings) {
         std::cout << pair.first  << std::endl;
@@ -48,7 +48,7 @@ int main(int argc, char** argv) {
 
     // Load the inference model. Should be provided by Celantur; the settings are provided to the load_inference_model function
     std::cout << "load model from " << model_path << std::endl;
-    processor.load_inference_model(model_path, settings);
+    processor.load_inference_model(settings);
 
     // Load some image for processing
     std::cout << "loading image from " << image_path << std::endl;
