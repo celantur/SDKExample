@@ -7,11 +7,13 @@
 #include "ImageEncoding.h"
 
 const std::filesystem::path exe_path = boost::dll::program_location().parent_path().string();
+const std::filesystem::path assets_path = exe_path/".."/"assets";
+const std::filesystem::path output_path = exe_path/".."/"output";
 const std::filesystem::path cpu_plugin_location = "/usr/local/lib/libONNXInference.so";
-const std::filesystem::path license_file = exe_path/"license";
-const std::filesystem::path image_path = exe_path/"image.jpg";
-const std::filesystem::path out_image_path = exe_path/"decoding_encoding.jpg"; 
-const std::filesystem::path model_path = exe_path/"yolov8_all_1280_medium_v4_static.onnx.enc"; 
+const std::filesystem::path license_file = assets_path/"license";
+const std::filesystem::path image_path = assets_path/"image.jpg";
+const std::filesystem::path out_image_path = output_path/"decoding_encoding.jpg"; 
+const std::filesystem::path model_path = assets_path/"yolov8_all_1280_medium_v4_static.onnx.enc"; 
 
 /**
     This example expands on the quickstart example by showing how to encode and decode the images using the CelanturSDK.
@@ -20,6 +22,7 @@ const std::filesystem::path model_path = exe_path/"yolov8_all_1280_medium_v4_sta
  */
 
 int main(int argc, char** argv) {
+    std::filesystem::create_directories(output_path);
     celantur::ProcessorParams params;
 
     // Manually point to the CPU inference plugin
