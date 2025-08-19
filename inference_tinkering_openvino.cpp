@@ -11,13 +11,13 @@ const std::filesystem::path output_path = exe_path/".."/"output";
 const std::filesystem::path cpu_plugin_location = "/usr/local/lib/libOpenVINORuntime.so";
 const std::filesystem::path license_file = assets_path/"license";
 const std::filesystem::path image_path = assets_path/"image.jpg";
-const std::filesystem::path out_image_path = output_path/"inference_tinkering_openvino.jpg"; 
-const std::filesystem::path model_path = assets_path/"yolov8_all_1280_medium_v6_static.onnx.enc"; 
-const std::filesystem::path model_path_compiled = assets_path/"yolov8_all_1280_medium_v6_compiled.openvino";
+const std::filesystem::path out_image_path = output_path/"inference_tinkering_openvino.jpg";
+const std::filesystem::path model_path = assets_path/"v6-static-fp32.onnx.enc";
+const std::filesystem::path model_path_compiled = assets_path/"v6-static-fp32-compiled.openvino.enc";
 
 /**
     The purpose of this example is to show the options one can tinker with using CPU inference engine.
-    Some of the settings might be internal and therefore not documented. 
+    Some of the settings might be internal and therefore not documented.
  */
 
 int main(int argc, char** argv) {
@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
         compiler_params.inference_plugin = cpu_plugin_location;
         CelanturSDK::ModelCompiler compiler(license_file, compiler_params);
         celantur::InferenceEnginePluginCompileSettings settings = compiler.preload_model(model_path);
-       
+
         // Optionally, investigate/change something if you want to
         std::optional<int> num_threads = std::any_cast<std::optional<int> >(settings["num_threads"]);
         if (num_threads) {
@@ -55,7 +55,7 @@ int main(int argc, char** argv) {
     std::cout << "Looking for license at " << license_file << std::endl;
 
     // OpenCV uses by default BGR, but the Celantur SDK uses RGB so we need to set swapRB to true
-    params.swapRB = true; 
+    params.swapRB = true;
 
     // Start the processor with given parameters and license file
     CelanturSDK::Processor processor(params, license_file);
@@ -81,7 +81,7 @@ int main(int argc, char** argv) {
     // Get the result
     cv::Mat out = processor.get_result();
 
-    // Discard the detections. Necessary to free up the memory. 
+    // Discard the detections. Necessary to free up the memory.
     processor.get_detections();
 
     // Save the result

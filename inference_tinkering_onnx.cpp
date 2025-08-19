@@ -11,12 +11,12 @@ const std::filesystem::path output_path = exe_path/".."/"output";
 const std::filesystem::path cpu_plugin_location = "/usr/local/lib/libONNXInference.so";
 const std::filesystem::path license_file = assets_path/"license";
 const std::filesystem::path image_path = assets_path/"image.jpg";
-const std::filesystem::path out_image_path = output_path/"inference_tinkering_onnx.jpg"; 
-const std::filesystem::path model_path = assets_path/"yolov8_all_1280_medium_v6_static.onnx.enc"; 
+const std::filesystem::path out_image_path = output_path/"inference_tinkering_onnx.jpg";
+const std::filesystem::path model_path = assets_path/"v6-static-fp32.onnx.enc";
 
 /**
     The purpose of this example is to show the options one can tinker with using CPU inference engine.
-    Some of the settings might be internal and therefore not documented. 
+    Some of the settings might be internal and therefore not documented.
  */
 
 int main(int argc, char** argv) {
@@ -28,7 +28,7 @@ int main(int argc, char** argv) {
     std::cout << "Looking for license at " << license_file << std::endl;
 
     // OpenCV uses by default BGR, but the Celantur SDK uses RGB so we need to set swapRB to true
-    params.swapRB = true; 
+    params.swapRB = true;
 
     // Start the processor with given parameters and license file
     CelanturSDK::Processor processor(params, license_file);
@@ -39,7 +39,7 @@ int main(int argc, char** argv) {
     for (const std::pair<std::string, std::any>& pair : settings) {
         std::cout << pair.first  << std::endl;
     }
-    
+
     // set the number of inference threads to 1 to limit inference engine to work with only one thread; value of 0 means that the engine will use all available threads
     settings["n_intra_threads"] = 1;
     settings["n_outer_threads"] = 1;
@@ -60,7 +60,7 @@ int main(int argc, char** argv) {
     // Get the result
     cv::Mat out = processor.get_result();
 
-    // Discard the detections. Necessary to free up the memory. 
+    // Discard the detections. Necessary to free up the memory.
     processor.get_detections();
 
     // Save the result

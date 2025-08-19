@@ -12,8 +12,8 @@ const std::filesystem::path output_path = exe_path/".."/"output";
 const std::filesystem::path cpu_plugin_location = "/usr/local/lib/libONNXInference.so";
 const std::filesystem::path license_file = assets_path/"license";
 const std::filesystem::path image_path = assets_path/"image.jpg";
-const std::filesystem::path out_image_path = output_path/"decoding_encoding.jpg"; 
-const std::filesystem::path model_path = assets_path/"yolov8_all_1280_medium_v6_static.onnx.enc"; 
+const std::filesystem::path out_image_path = output_path/"decoding_encoding.jpg";
+const std::filesystem::path model_path = assets_path/"v6-static-fp32.onnx.enc";
 
 /**
     This example expands on the quickstart example by showing how to encode and decode the images using the CelanturSDK.
@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
     std::cout << "Looking for license at " << license_file << std::endl;
 
     // OpenCV uses by default BGR, but the Celantur SDK uses RGB so we need to set swapRB to true
-    params.swapRB = true; 
+    params.swapRB = true;
 
     // Start the processor with given parameters and license file
     CelanturSDK::Processor processor(params, license_file);
@@ -43,7 +43,7 @@ int main(int argc, char** argv) {
     // Load the image binary
     std::ifstream image_file(image_path, std::ios::binary);
     std::vector<unsigned char> image_data((std::istreambuf_iterator<char>(image_file)), std::istreambuf_iterator<char>());
-    
+
     // Decode the image
     cv::Mat image = celantur::jpeg_decode(image_data.data(), image_data.size());
 
@@ -51,15 +51,15 @@ int main(int argc, char** argv) {
     celantur::ExifMetadata metadata = celantur::jpeg_get_exif_metadata(image_data.data(), image_data.size());
 
     // Print the metadata
-    metadata.print_debug_info(std::cout);   
+    metadata.print_debug_info(std::cout);
 
     // Enqueue the image for processing
     processor.process(image);
 
     // Get the result
     cv::Mat out = processor.get_result();
-    
-    // Discard the detections. Necessary to free up the memory. 
+
+    // Discard the detections. Necessary to free up the memory.
     processor.get_detections();
 
     // Encode the image back together with metadata. Notice the std::move to transfer the ownership of the metadata to the encoder. We are using thin wrapper around exiflib to handle the metadata and there is no copy constructor defined

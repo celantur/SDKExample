@@ -14,8 +14,8 @@ const std::filesystem::path output_path = exe_path/".."/"output";
 const std::filesystem::path cpu_plugin_location = "/usr/local/lib/libONNXInference.so";
 const std::filesystem::path license_file = assets_path/"license";
 const std::filesystem::path image_path = assets_path/"image.jpg";
-const std::filesystem::path out_image_path = output_path/"detections_and_thresholds.jpg"; 
-const std::filesystem::path model_path = assets_path/"yolov8_all_1280_medium_v6_static.onnx.enc"; 
+const std::filesystem::path out_image_path = output_path/"detections_and_thresholds.jpg";
+const std::filesystem::path model_path = assets_path/"v6-static-fp32.onnx.enc";
 
 /**
     This example expands on the quickstart example by showing how to set different thresholds for different classes.
@@ -31,7 +31,7 @@ int main(int argc, char** argv) {
     std::cout << "Looking for license at " << license_file << std::endl;
 
     // OpenCV uses by default BGR, but the Celantur SDK uses RGB so we need to set swapRB to true
-    params.swapRB = true; 
+    params.swapRB = true;
 
     // Setup different thresholds for different classes
     celantur::ModelThresholds thresholds;
@@ -56,7 +56,7 @@ int main(int argc, char** argv) {
 
     // Get the result
     cv::Mat out = processor.get_result();
-    
+
     // Get the detections and draw them on the image
     std::vector<celantur::CelanturDetection> dets = processor.get_detections();
     cv::Mat result = celantur::visualise_detections(out, dets);
@@ -69,7 +69,7 @@ int main(int argc, char** argv) {
     std::stringstream metadata_json_str;
     serialise_image_metrics_to_json(out, dets, "input_image_name", "input_folder", metadata_json_str);
     std::cout << "metadata json: " << metadata_json_str.str() << std::endl;
-    
+
 
 
 
