@@ -27,3 +27,6 @@ target_link_libraries(inference_tinkering_openvino PRIVATE CppProcessing::Celant
 
 add_executable(person-vehicle-anon person-vehicle-anon.cpp)
 target_link_libraries(person-vehicle-anon PRIVATE CppProcessing::CelanturSDK CppProcessing::common-module)
+
+add_executable(small-model small_model.cpp)
+target_link_libraries(small-model PRIVATE CppProcessing::CelanturSDK CppProcessing::common-module)
