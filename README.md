@@ -52,6 +52,8 @@ Copy all assets required to `assets/`:
 - `v6-static-fp32.onnx.enc`: Encrypted model.
 - `image.jpg`: Test images.
 
+In case you were provided with some custom models, such as less-precise but faster models, your model name can be different.
+
 You can change the file names in the source code.
 
 ### Executables
@@ -67,6 +69,7 @@ In `build/`, you find the following executables:
 - `detections_and_thresholds`: The code shows how to filter detections based on threshold,
   to visualise detections and to generate detection metrics in JSON.
 - `person-vehicle-anon.cpp`: The code shows how to anonymise persons and vehicles with segmentation mask.
+- `small_model.cpp`: The code shows how to use a smaller and faster model for anonymisation on the example of OpenVINO inference engine.
 
 ## Troubleshooting
 
