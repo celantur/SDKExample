@@ -30,3 +30,9 @@ target_link_libraries(person-vehicle-anon PRIVATE CppProcessing::CelanturSDK Cpp
 
 add_executable(small-model small_model.cpp)
 target_link_libraries(small-model PRIVATE CppProcessing::CelanturSDK CppProcessing::common-module)
+
+add_executable(gpu_quickstart gpu_quickstart.cpp)
+target_link_libraries(gpu_quickstart PRIVATE CppProcessing::CelanturSDK CppProcessing::common-module)
+
+add_executable(gpu_compilation_tinkering gpu_compilation_tinkering.cpp)
+target_link_libraries(gpu_compilation_tinkering PRIVATE CppProcessing::CelanturSDK CppProcessing::common-module)

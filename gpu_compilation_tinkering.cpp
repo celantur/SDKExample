@@ -11,9 +11,9 @@ const std::filesystem::path output_path = exe_path/".."/"output";
 const std::filesystem::path gpu_plugin_location = "/usr/local/lib/libTensorRTRuntime.so";
 const std::filesystem::path license_file = assets_path/"license";
 const std::filesystem::path image_path = assets_path/"image.jpg";
-const std::filesystem::path out_image_path = output_path/"gpu_quickstart.jpg";
+const std::filesystem::path out_image_path = output_path/"gpu_compilation_tinkering.jpg";
 const std::filesystem::path model_path = assets_path/"v6-static-fp32.onnx.enc";
-const std::filesystem::path model_path_compiled = assets_path/"v6-static-fp32-compiled.trt";
+const std::filesystem::path model_path_compiled = assets_path/"v6-static-fp16-compiled-full.trt";
 
 /**
     The purpose of this example is to show the options one can run SDK using Nvidia GPU inference engine TensorRT.
@@ -51,9 +51,9 @@ int main(int argc, char** argv) {
         celantur::InferenceEnginePluginCompileSettings settings = compiler.preload_model(model_path);
        
         // TensorRT has some specific settings we can modify; for example, we can set the precision and optimisation level
-        // As this is an example, we opt for low optimisation level and FP32 precision for fast compilation
-        settings["precision"] = celantur::CompilePrecision::FP32;
-        settings["optimisation_level"] = celantur::OptimisationLevel::Low;
+        // In this example, we select the highest optimisation level and FP16 precision for maximum performance
+        settings["precision"] = celantur::CompilePrecision::FP16;
+        settings["optimisation_level"] = celantur::OptimisationLevel::Full;
 
         // Now compile the model
         std::cout << "Compiling model to " << model_path_compiled << std::endl;
@@ -102,5 +102,6 @@ int main(int argc, char** argv) {
 
     return 0;
 }
+
 
 
