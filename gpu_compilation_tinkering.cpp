@@ -19,26 +19,6 @@ const std::filesystem::path model_path_compiled = assets_path/"v6-static-fp16-co
     The purpose of this example is to show the options one can run SDK using Nvidia GPU inference engine TensorRT.
  */
 
-
-
-    // PRINT_TEST_NAME();
-    // CelanturSDK::ModelCompilerParams params;
-    // params.inference_plugin = plugin_dir/trt_name;
-    // CelanturSDK::ModelCompiler compiler(license_file, params);
-    //
-    // celantur::InferenceEnginePluginCompileSettings settings = compiler.preload_model(model_path);
-    // settings["precision"] = celantur::CompilePrecision::FP32;
-    // settings["optimisation_level"] = celantur::OptimisationLevel::Low;
-    // compiler.compile_model(settings, trt_comp_model);
-    //
-    // celantur::ProcessorParams proc_params;
-    // proc_params.inference_plugin = plugin_dir/trt_name;
-    // CelanturSDK::Processor processor(proc_params, license_file);
-    // auto runtime_settings = processor.get_inference_settings(trt_comp_model);
-    // CelanturSDK::AdditionalProcessorParams additional_params;
-    // processor.load_inference_model(runtime_settings, additional_params);
-    // anonymise_image(image_path, out_test/"trt_compile_run.jpg", processor);
-
 int main(int argc, char** argv) {
     std::filesystem::create_directories(output_path);
 
@@ -73,6 +53,7 @@ int main(int argc, char** argv) {
     CelanturSDK::Processor processor(params, license_file);
 
     // Get the available inference engine settings and their default values
+    // For the tensorRT plugin currently there are no additional settings but this may change in the future
     celantur::InferenceEnginePluginSettings settings = processor.get_inference_settings(model_path_compiled);
     std::cout << "Inference engine parameters:" << std::endl;
     for (const std::pair<std::string, std::any>& pair : settings) {
