@@ -118,6 +118,11 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/
 
 Or edit the [runpath](https://blogs.oracle.com/solaris/post/changing-elf-runpaths-code-included).
 
+## Additional settings
 
+By default, logging level is set to `INFO`. If you find it too verbose, you can change it to `WARNING` or `ERROR`. Here is an example how to set logging level to `WARNING`:
 
+```bash
+export LOG_LEVEL=WARNING
+```
 
