@@ -36,3 +36,6 @@ target_link_libraries(gpu_quickstart PRIVATE CppProcessing::CelanturSDK CppProce
 
 add_executable(gpu_compilation_tinkering gpu_compilation_tinkering.cpp)
 target_link_libraries(gpu_compilation_tinkering PRIVATE CppProcessing::CelanturSDK CppProcessing::common-module)
+
+add_executable(tracking tracking.cpp)
+target_link_libraries(tracking PRIVATE CppProcessing::CelanturSDK CppProcessing::common-module)
