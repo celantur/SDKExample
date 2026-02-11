@@ -16,7 +16,7 @@ const std::filesystem::path model_path = assets_path/"v6-static-fp32.onnx.enc";
 const std::filesystem::path model_path_compiled = assets_path/"v6-static-fp32-compiled.trt";
 
 /**
-    The purpose of this example is to show how one can improve the deteciton results for videos with tracking 
+    The purpose of this example is to show how one can improve the detection results for videos with tracking 
 */
 void process_video_with_tracking(CelanturSDK::Processor& processor, CelanturSDK::Tracker& tracker, CelanturSDK::Anonymiser& anonymiser) {
     cv::VideoCapture cap(video_path.string());
