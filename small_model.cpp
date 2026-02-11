@@ -12,7 +12,7 @@ const std::filesystem::path cpu_plugin_location = "/usr/local/lib/libOpenVINORun
 const std::filesystem::path license_file = assets_path/"license";
 const std::filesystem::path image_path = assets_path/"image.jpg";
 const std::filesystem::path out_image_path = output_path/"openvino_small_model.jpg"; 
-const std::filesystem::path model_path = assets_path/"v6-static-fp32-small-640.onnx.enc"; 
+const std::filesystem::path model_path = assets_path/"v8-static-fp32-small-640.onnx.enc"; 
 const std::filesystem::path model_path_compiled = assets_path/"v6-static-fp32-small-640.openvino";
 
 /**

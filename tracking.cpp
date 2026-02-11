@@ -10,14 +10,73 @@ const std::filesystem::path assets_path = exe_path/".."/"assets";
 const std::filesystem::path output_path = exe_path/".."/"output";
 const std::filesystem::path gpu_plugin_location = "/usr/local/lib/libTensorRTRuntime.so";
 const std::filesystem::path license_file = assets_path/"license";
-const std::filesystem::path image_path = assets_path/"image.jpg";
-const std::filesystem::path out_image_path = output_path/"gpu_quickstart.jpg";
+const std::filesystem::path video_path = assets_path/"video.mp4";
+const std::filesystem::path out_video_path = output_path/"video.mp4";
 const std::filesystem::path model_path = assets_path/"v6-static-fp32.onnx.enc";
 const std::filesystem::path model_path_compiled = assets_path/"v6-static-fp32-compiled.trt";
 
 /**
-    The purpose of this example is to show the options one can run SDK using Nvidia GPU inference engine TensorRT.
- */
+    The purpose of this example is to show how one can improve the detection results for videos with tracking 
+*/
+void process_video_with_tracking(CelanturSDK::Processor& processor, CelanturSDK::Tracker& tracker, CelanturSDK::Anonymiser& anonymiser) {
+    cv::VideoCapture cap(video_path.string());
+
+    if (!cap.isOpened()) {
+        std::cerr << "Error: Could not open video source." << std::endl;
+        return;
+    }
+
+    // 2. Get properties from the source
+    int frame_width  = static_cast<int>(cap.get(cv::CAP_PROP_FRAME_WIDTH));
+    int frame_height = static_cast<int>(cap.get(cv::CAP_PROP_FRAME_HEIGHT));
+    double fps       = cap.get(cv::CAP_PROP_FPS);
+    
+    cv::VideoWriter writer(out_video_path.string(),
+                           cv::VideoWriter::fourcc('M','J','P','G'),
+                           fps, 
+                           cv::Size(frame_width, frame_height));
+
+    if (!writer.isOpened()) {
+        std::cerr << "Error: Could not open VideoWriter." << std::endl;
+        return;
+    }
+
+    cv::Mat frame;
+    int counter = 0;
+
+
+    while (true) {
+        // 4. Read frame
+        bool success = cap.read(frame);
+        if (!success || frame.empty()) {
+            std::cout << "End of stream." << std::endl;
+            break;
+        }
+
+        std::cout << "Processing frame " << ++counter << std::endl;
+
+        processor.process(frame);
+        cv::Mat anonymised_frame = processor.get_result();
+        std::vector<celantur::CelanturDetection> dets = processor.get_detections();
+        tracker.update(dets);
+
+        auto lost_dets = tracker.get_lost_detections();
+        for (const auto& det : lost_dets) {
+            anonymiser.anonymise(anonymised_frame, det);
+            // Just for visualisation purposes, draw the bounding box of the lost track on the frame
+            cv::rectangle(anonymised_frame, det.box, cv::Scalar(0, 255, 0), 2);
+        }
+
+        // 5. Write frame to file
+        writer.write(anonymised_frame);
+    }
+
+    // 7. Cleanup (Release handles automatically on destruction, but good practice)
+    cap.release();
+    writer.release();
+
+    return;
+}
 
 int main(int argc, char** argv) {
     std::filesystem::create_directories(output_path);
@@ -63,24 +122,14 @@ int main(int argc, char** argv) {
     std::cout << "load model from " << model_path << std::endl;
     processor.load_inference_model(settings);
 
-    // Load some image for processing
-    std::cout << "loading image from " << image_path << std::endl;
-    cv::Mat image = cv::imread(image_path);
+    // To perform tracking we need separate anonymiser and tracker objects.
+    CelanturSDK::Tracker tracker(license_file);
+    CelanturSDK::Anonymiser anonymiser(license_file, params.per_type_processing_config);
 
-    // Enqueue the image for processing
-    processor.process(image);
-
-    // Get the result
-    cv::Mat out = processor.get_result();
-
-    // Discard the detections. Necessary to free up the memory.
-    processor.get_detections();
-
-    // Save the result
-    std::cout << "saving result to " << out_image_path << std::endl;
-    cv::imwrite(out_image_path, out);
+    process_video_with_tracking(processor, tracker, anonymiser);
 
     return 0;
 }
+
 
 
