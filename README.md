@@ -70,6 +70,7 @@ In `build/`, you find the following executables:
   to visualise detections and to generate detection metrics in JSON.
 - `person-vehicle-anon.cpp`: The code shows how to anonymise persons and vehicles with segmentation mask.
 - `small_model.cpp`: The code shows how to use a smaller and faster model for anonymisation on the example of OpenVINO inference engine.
+- `detect.cpp`: How to use SDK to only get detections and don't spend any time on actual blurring.
 
 ## Troubleshooting
 
