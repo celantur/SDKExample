@@ -33,47 +33,47 @@ int main(int argc, char** argv) {
     (
         {
             {
-                CelanturClassId::LicensePlate,
-                DetectionProcessingConfig {
-                    BlurType::None,
+                celantur::CelanturClassId::LicensePlate,
+                celantur::DetectionProcessingConfig {
+                    celantur::BlurType::None,
                     0.3f,
                     0.0f,
                     1.0f,
                     true,
-                    DetectionType::BBox,
+                    celantur::DetectionType::BBox,
                 }
             },
             {
-                CelanturClassId::Person,
-                DetectionProcessingConfig {
-                    BlurType::None,
+                celantur::CelanturClassId::Person,
+                celantur::DetectionProcessingConfig {
+                    celantur::BlurType::None,
                     0.3f,
                     0.0f,
                     0.2f,
                     false,
-                    DetectionType::Segmentation
+                    celantur::DetectionType::Segmentation
                 }
             },
             {
-                CelanturClassId::Face,
-                DetectionProcessingConfig {
-                    BlurType::None,
+                celantur::CelanturClassId::Face,
+                celantur::DetectionProcessingConfig {
+                    celantur::BlurType::None,
                     0.3f,
                     0.0f,
                     0.2f,
                     true,
-                    DetectionType::BBox,
+                    celantur::DetectionType::BBox,
                 }
             },
             {
-                CelanturClassId::Vehicle,
-                DetectionProcessingConfig {
-                    BlurType::None,
+                celantur::CelanturClassId::Vehicle,
+                celantur::DetectionProcessingConfig {
+                    celantur::BlurType::None,
                     0.3f,
                     0.0f,
                     0.2f,
                     false,
-                    DetectionType::Segmentation
+                    celantur::DetectionType::Segmentation
                 }
                         
             },
