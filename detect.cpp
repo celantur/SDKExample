@@ -11,7 +11,6 @@ const std::filesystem::path output_path = exe_path/".."/"output";
 const std::filesystem::path cpu_plugin_location = "/usr/local/lib/libONNXInference.so";
 const std::filesystem::path license_file = assets_path/"license";
 const std::filesystem::path image_path = assets_path/"image.jpg";
-const std::filesystem::path out_image_path = output_path/"segment-person-vehicle.jpg";
 const std::filesystem::path model_path = assets_path/"v6-static-fp32.onnx.enc";
 
 
@@ -28,18 +27,58 @@ int main(int argc, char** argv) {
     params.inference_plugin = cpu_plugin_location;
     std::cout << "Looking for license at " << license_file << std::endl;
     
+    // Another option is to use predefined configurations:
+    // const celantur::PerTypeProcessingConfig anonymisation_config = celantur::DETECT_ONLY_CONFIG;
     const celantur::PerTypeProcessingConfig anonymisation_config
     (
         {
-            {celantur::CelanturClassId::LicensePlate, {celantur::BlurType::None}},
-            {celantur::CelanturClassId::Person, {celantur::BlurType::Segmentation}},
-            {celantur::CelanturClassId::Face, {celantur::BlurType::None}},
-            {celantur::CelanturClassId::Vehicle, {celantur::BlurType::Segmentation}},
+            {
+                celantur::CelanturClassId::LicensePlate,
+                celantur::DetectionProcessingConfig {
+                    celantur::BlurType::None,
+                    0.3f,
+                    0.0f,
+                    1.0f,
+                    true,
+                    celantur::DetectionType::BBox,
+                }
+            },
+            {
+                celantur::CelanturClassId::Person,
+                celantur::DetectionProcessingConfig {
+                    celantur::BlurType::None,
+                    0.3f,
+                    0.0f,
+                    0.2f,
+                    false,
+                    celantur::DetectionType::Segmentation
+                }
+            },
+            {
+                celantur::CelanturClassId::Face,
+                celantur::DetectionProcessingConfig {
+                    celantur::BlurType::None,
+                    0.3f,
+                    0.0f,
+                    0.2f,
+                    true,
+                    celantur::DetectionType::BBox,
+                }
+            },
+            {
+                celantur::CelanturClassId::Vehicle,
+                celantur::DetectionProcessingConfig {
+                    celantur::BlurType::None,
+                    0.3f,
+                    0.0f,
+                    0.2f,
+                    false,
+                    celantur::DetectionType::Segmentation
+                }
+                        
+            },
         }
     );
-    
-    // Another option is to use predefined configurations:
-    // const celantur::PerTypeProcessingConfig anonymisation_config = celantur::PERSON_VEHICLE_PROCESSING_CONFIG;
     
     params.per_type_processing_config = anonymisation_config;
     params.swapRB = true; // OpenCV uses by default BGR, but the Celantur SDK uses RGB
@@ -59,16 +98,14 @@ int main(int argc, char** argv) {
     // Enqueue the image for processing
     processor.process(image);
     
-    // Get the result
-    cv::Mat out = processor.get_result();
+    // Get the result (the original unprocessed image in this case), which can be safely discarded. 
+    processor.get_result();
     
-    // Discard the detections. Necessary to free up the memory.
-    processor.get_detections();
-    
-    // Save the result
-    std::cout << "saving result to " << out_image_path << std::endl;
-    cv::imwrite(out_image_path, out);
+    // Discard the detections. Necessary to free up the memory (all detections will be present here due to the DetectionType parameters)
+    std::vector<celantur::CelanturDetection> dets = processor.get_detections();
+    std::cout << "Amount of detections: " << dets.size() << std::endl;
     
     return 0;
 }
+
 
