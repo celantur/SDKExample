@@ -4,8 +4,6 @@ Celantur SDK Examples
 The [Celantur](https://www.celantur.com) SDK provides privacy-preserving image blurring through
 automatic anonymisation of faces and license plates.
 
-> ! Person and vehicle anonymisation is currently (v1.1.0) buggy in combination with tiling.
-
 In this repository you find a lot of example code how to use [Celantur SDK](https://doc.celantur.com/sdk/getting-started).
 
 ## Prerequisite
