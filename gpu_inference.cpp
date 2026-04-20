@@ -11,7 +11,7 @@
 const std::filesystem::path exe_path = boost::dll::program_location().parent_path().string();
 const std::filesystem::path assets_path = exe_path/".."/"assets";
 const std::filesystem::path output_path = exe_path/".."/"output";
-const std::filesystem::path gpu_plugin_location = "/app/output/lib/libTensorRTRuntime.so";
+const std::filesystem::path gpu_plugin_location = "/usr/local/lib/libTensorRTRuntime.so";
 const std::filesystem::path license_file = assets_path/"license";
 const std::filesystem::path image_path = assets_path/"image.jpg";
 const std::filesystem::path out_image_path = output_path/"gpu_inference.jpg";
