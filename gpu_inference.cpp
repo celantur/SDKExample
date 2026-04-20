@@ -249,4 +249,6 @@ int main(int argc, char** argv) {
     auto detections = postprocess_injected2(host_res, cv::Size2i(img.cols, img.rows), cv::Size2i(1280, 1280));
     cv::Mat img_out = celantur::visualise_detections(img, detections);
     cv::imwrite(out_image_path, img_out);
+    
+    // please not that destruction of the engine will currently throw an error for unknown reasons. We are working on fixing this but this was not a priority for pre-release.
 }
