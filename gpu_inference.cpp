@@ -18,6 +18,10 @@ const std::filesystem::path out_image_path = output_path/"gpu_inference.jpg";
 const std::filesystem::path model_path = assets_path/"v6-static-fp32.onnx.enc";
 const std::filesystem::path model_path_compiled = assets_path/"v6-static-fp32-compiled-gpu.trt";
 
+/**
+ * This is just utility struct for the purpose of just copying the results from the GPU to the host and postprocessing them there. It is not necessary to do it this way, but it makes it easier to work with the results on the host side.
+ * In a real gpu application you probably don't want this data to ever leave the GPU, but for the purpose of this example and to visualise things more easily, we copy the results to the host and postprocess them there.
+ */
 struct GPUInferenceResultHost2 : public celantur::GPUInferenceResult {
     std::vector<float> masks_;
     std::vector<float> scores_;
@@ -71,22 +75,28 @@ struct GPUInferenceResultHost2 : public celantur::GPUInferenceResult {
     }
 };
 
-
+/**
+ * This is also an utility function for the purpose of converting the raw outputs to the CelanturDetection format. We leave it here as an example of what you would need to extract detections, bounding boxes, masks, classes and so on.
+*/
 std::vector<celantur::CelanturDetection> postprocess_injected2(
     GPUInferenceResultHost2& host_res,
     cv::Size2i tile_size, 
     cv::Size2i context_size) 
 {
     std::vector<celantur::CelanturDetection> detections;
+    // num_detections is also present in the gpu result struct.
     if (host_res.num_detections == 0) return detections;
     detections.reserve(host_res.num_detections);
     
+    // for scaling the bounding boxes to the original image size.
     int max_x = tile_size.width;
     int max_y = tile_size.height;
     float x_factor = static_cast<float>(tile_size.width) / static_cast<float>(context_size.width);
     float y_factor = static_cast<float>(tile_size.height) / static_cast<float>(context_size.height);
     
-    const int mask_size = 320; // Ensure this matches your plugin's output dimensions
+    
+    // mask size is always the context size divided by 4. The raw inference output is always downscaled.
+    const int mask_size = 320;
     
     for (int i = 0; i < host_res.num_detections; ++i) {
         const float* box_ptr = host_res.boxes_.data() + (i * 4);
@@ -108,7 +118,7 @@ std::vector<celantur::CelanturDetection> postprocess_injected2(
         if (roi_adj.x + roi_adj.width > max_x) roi_adj.width = max_x - roi_adj.x;
         if (roi_adj.y + roi_adj.height > max_y) roi_adj.height = max_y - roi_adj.y;
         
-        // 3. Extract and Process the Mask
+        // Extract and process the mask
         const float* mask_ptr = host_res.masks_.data() + (i * mask_size * mask_size);
         cv::Mat mask_mat(mask_size, mask_size, CV_32FC1);
         float* mask_data = reinterpret_cast<float*>(mask_mat.data);
@@ -120,14 +130,13 @@ std::vector<celantur::CelanturDetection> postprocess_injected2(
         }
         
         // Resize the mask to the full tile size
-        // CRITICAL: Use INTER_NEAREST to prevent OpenCV from creating fractional values (e.g., 0.1159) on the edges!
         cv::Mat resized_mask;
         cv::resize(mask_mat, resized_mask, cv::Size(max_x, max_y), 0, 0, cv::INTER_NEAREST);
         
-        // Crop the mask to the clamped bounding box
+        // Crop the mask to the clamped bounding box. By default masks from the GPU are just masks for the whole image, but they are only valid within the bounding box.
         cv::Mat roi_mask = resized_mask(roi_adj).clone();
         
-        // 4. Map to your struct
+        // map to Celantur class ID and name
         celantur::YOLO_CLASS_IDs yolo_type = static_cast<celantur::YOLO_CLASS_IDs>(host_res.classes_[i]);
         celantur::CelanturClassId type_id = celantur::YOLO_CLASS_MAP.at(yolo_type);
         
@@ -146,6 +155,9 @@ std::vector<celantur::CelanturDetection> postprocess_injected2(
 }
 
 int main(int argc, char** argv) {
+    // First, compile the model. This model is different from the one used in the CPU examples, as it is optimised for GPU inference. To check that you compiled correctly, check the output for:
+    // [2026-04-20 06:04:43.248839] [0x00007701a0745000] [info]    Injecting Native NMS and Segmentation Graph...
+    // [2026-04-20 06:04:43.249090] [0x00007701a0745000] [info]    NMS and Segmentation Graph Injection Complete.
     CelanturSDK::ModelCompilerParams params;
     params.inference_plugin = gpu_plugin_location;
     params.inference_plugin_group = celantur::PluginGroup::GPUInferenceEngine;
@@ -158,6 +170,7 @@ int main(int argc, char** argv) {
     settings["optimisation_level"] = celantur::OptimisationLevel::Low;
     compiler.compile_model(settings, model_path_compiled);
     
+    // Second, create the inference engine and load the compiled model.
     CelanturSDK::CUDAInferenceEngineParams cuda_params;
     cuda_params.inference_plugin = gpu_plugin_location;
     CelanturSDK::CUDAInferenceEngine engine(cuda_params, license_file);
@@ -165,6 +178,8 @@ int main(int argc, char** argv) {
     std::cout << "Runtime settings: " << rt_settings << std::endl;
     engine.load_inference_model(rt_settings);
     
+    
+    // Create a stream that we will use for all the GPU operations in this example. You can create multiple streams if you want to run multiple inferences in parallel, the workflow is the same.
     cudaStream_t stream;
     if (cudaStreamCreate(&stream) != cudaSuccess) {
         std::cerr << "Failed to create CUDA stream" << std::endl;
@@ -173,6 +188,7 @@ int main(int argc, char** argv) {
     CelanturSDK::AdditionalCUDAInferenceEngineParams additional_params;
     additional_params.context_height = 1280;
     additional_params.context_width = 1280;
+    // This is an important step, because it tells the engine to prepare the execution context for the given stream and parameters. If you don't call this, the engine will throw an error. Note that execution context setup is a costly operation and also takes non-negligible amount of GPU memory. We take care that there is only one execution context prepared for a given stream, but using multiple streams might be a cause for OOM.
     engine.prepare_execution_context(stream, additional_params);
     std::cout << "Prepared execution context for stream " << stream << std::endl;
     
@@ -185,12 +201,12 @@ int main(int argc, char** argv) {
         return -1;
     }
     
-    
     if (cudaMemcpyAsync(d_img, img.data, img_bytes, cudaMemcpyHostToDevice, stream) != cudaSuccess) {
         std::cerr << "Failed to copy image data to device" << std::endl;
         return -1;
     }
     
+    // Now we need to preprocess the image into the tile that is a size of the context (1280x1280 in this case). The preprocess function runs on the GPU and takes care of resizing the image to the context size, normalising it and converting it to RGB if necessary. The output of the preprocess function is a tensor that is ready to be fed into the inference engine. 
     float* d_input = nullptr;
     celantur::Dims in_dims = engine.get_input_dimensions(stream);
     size_t input_bytes = in_dims.totalSize() * sizeof(float);
@@ -218,17 +234,19 @@ int main(int argc, char** argv) {
     
     cudaStreamSynchronize(stream);
     
+    // execute asynchronous inference. The return value just says whether the inference was successfully queued.
     if (!engine.execute(d_input, stream)) {
         std::cerr << "Failed to execute inference" << std::endl;
         return -1;
     }
+    
+    // Get the result. This function will return immediately, but the result will be available only after the inference is done. The result is a struct that contains pointers to the output tensors on the device, as well as their dimensions and the number of detections. You can either do postprocessing on the GPU using these pointers, or you can copy the results to the host and do postprocessing there. In this example we copy the results to the host for easier visualisation, but in a real application you probably want to do everything on the GPU.
     celantur::GPUInferenceResultDevice res = engine.get_result(stream);
     cudaStreamSynchronize(stream);
     
+    // This is not important and just an example of how to extract the results and display them on the image.
     GPUInferenceResultHost2 host_res = GPUInferenceResultHost2::from_device_result(res, stream);
-    
     auto detections = postprocess_injected2(host_res, cv::Size2i(img.cols, img.rows), cv::Size2i(1280, 1280));
-    
     cv::Mat img_out = celantur::visualise_detections(img, detections);
     cv::imwrite(out_image_path, img_out);
 }
