@@ -1,9 +1,22 @@
 #include "CelanturDetection.h"
 #include "CelanturSDKInterface.h"
+#include "CelanturSDKGPUInterface.h"
 #include "CommonParameters.h"
+#include "detections-utils.h"
 #include <filesystem>
+#include <cuda_runtime.h>
 #include <opencv2/opencv.hpp>
 #include <boost/dll.hpp>
+
+const std::filesystem::path exe_path = boost::dll::program_location().parent_path().string();
+const std::filesystem::path assets_path = exe_path/".."/"assets";
+const std::filesystem::path output_path = exe_path/".."/"output";
+const std::filesystem::path gpu_plugin_location = "/app/output/lib/libTensorRTRuntime.so";
+const std::filesystem::path license_file = assets_path/"license";
+const std::filesystem::path image_path = assets_path/"image.jpg";
+const std::filesystem::path out_image_path = output_path/"gpu_inference.jpg";
+const std::filesystem::path model_path = assets_path/"v6-static-fp32.onnx.enc";
+const std::filesystem::path model_path_compiled = assets_path/"v6-static-fp32-compiled-gpu.trt";
 
 struct GPUInferenceResultHost2 : public celantur::GPUInferenceResult {
     std::vector<float> masks_;
@@ -132,10 +145,9 @@ std::vector<celantur::CelanturDetection> postprocess_injected2(
     return detections;
 }
 
-TEST_CASE("model_comp_gpu","[gpu]") {
-    PRINT_TEST_NAME();
+int main(int argc, char** argv) {
     CelanturSDK::ModelCompilerParams params;
-    params.inference_plugin = plugin_dir/trt_name;
+    params.inference_plugin = gpu_plugin_location;
     params.inference_plugin_group = celantur::PluginGroup::GPUInferenceEngine;
     
     CelanturSDK::ModelCompiler compiler(license_file, params);
@@ -144,17 +156,20 @@ TEST_CASE("model_comp_gpu","[gpu]") {
     
     settings["precision"] = celantur::CompilePrecision::FP32;
     settings["optimisation_level"] = celantur::OptimisationLevel::Low;
-    compiler.compile_model(settings, trt_comp_model_gpu_1280);
+    compiler.compile_model(settings, model_path_compiled);
     
     CelanturSDK::CUDAInferenceEngineParams cuda_params;
-    cuda_params.inference_plugin = plugin_dir/trt_name;
+    cuda_params.inference_plugin = gpu_plugin_location;
     CelanturSDK::CUDAInferenceEngine engine(cuda_params, license_file);
-    celantur::InferenceEnginePluginSettings rt_settings = engine.get_inference_settings(trt_comp_model_gpu_1280);
+    celantur::InferenceEnginePluginSettings rt_settings = engine.get_inference_settings(model_path_compiled);
     std::cout << "Runtime settings: " << rt_settings << std::endl;
     engine.load_inference_model(rt_settings);
     
     cudaStream_t stream;
-    REQUIRE(cudaStreamCreate(&stream) == cudaSuccess);
+    if (cudaStreamCreate(&stream) != cudaSuccess) {
+        std::cerr << "Failed to create CUDA stream" << std::endl;
+        return -1;
+    }
     CelanturSDK::AdditionalCUDAInferenceEngineParams additional_params;
     additional_params.context_height = 1280;
     additional_params.context_width = 1280;
@@ -165,8 +180,16 @@ TEST_CASE("model_comp_gpu","[gpu]") {
     
     uint8_t* d_img = nullptr;
     size_t img_bytes = img.step * img.rows;
-    REQUIRE(cudaMallocAsync(&d_img, img_bytes, stream) == cudaSuccess);
-    REQUIRE(cudaMemcpyAsync(d_img, img.data, img_bytes, cudaMemcpyHostToDevice, stream) == cudaSuccess);
+    if (cudaMallocAsync(&d_img, img_bytes, stream) != cudaSuccess) {
+        std::cerr << "Failed to allocate device memory for image" << std::endl;
+        return -1;
+    }
+    
+    
+    if (cudaMemcpyAsync(d_img, img.data, img_bytes, cudaMemcpyHostToDevice, stream) != cudaSuccess) {
+        std::cerr << "Failed to copy image data to device" << std::endl;
+        return -1;
+    }
     
     float* d_input = nullptr;
     celantur::Dims in_dims = engine.get_input_dimensions(stream);
@@ -176,7 +199,11 @@ TEST_CASE("model_comp_gpu","[gpu]") {
         std::cout << in_dims.dims[i] << " ";
     }
     
-    REQUIRE(cudaMallocAsync(&d_input, input_bytes, stream) == cudaSuccess);
+    if (cudaMallocAsync(&d_input, input_bytes, stream) != cudaSuccess) {
+        std::cerr << "Failed to allocate device memory for input" << std::endl;
+        return -1;
+    }
+    
     engine.preprocess(
         d_img,
         img.cols,
@@ -191,7 +218,10 @@ TEST_CASE("model_comp_gpu","[gpu]") {
     
     cudaStreamSynchronize(stream);
     
-    REQUIRE(engine.execute(d_input, stream));
+    if (!engine.execute(d_input, stream)) {
+        std::cerr << "Failed to execute inference" << std::endl;
+        return -1;
+    }
     celantur::GPUInferenceResultDevice res = engine.get_result(stream);
     cudaStreamSynchronize(stream);
     
@@ -200,5 +230,5 @@ TEST_CASE("model_comp_gpu","[gpu]") {
     auto detections = postprocess_injected2(host_res, cv::Size2i(img.cols, img.rows), cv::Size2i(1280, 1280));
     
     cv::Mat img_out = celantur::visualise_detections(img, detections);
-    cv::imwrite(out_test/"gpu_only_inference_result.jpg", img_out);
+    cv::imwrite(out_image_path, img_out);
 }
