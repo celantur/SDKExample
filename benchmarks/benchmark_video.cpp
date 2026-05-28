@@ -5,6 +5,7 @@
 #include <opencv2/opencv.hpp>
 #include <boost/dll.hpp>
 #include <boost/program_options.hpp>
+#include "resource_monitor.h"
 #include <chrono>
 #include <cmath>
 #include <iomanip>
@@ -198,9 +199,16 @@ int main(int argc, char** argv) {
     std::cout << "Starting benchmark...\n\n";
 
     std::vector<double> decode_times, process_times, tracking_times, save_times;
+    std::vector<double> gpu_util, gpu_mem_mb;
     cv::Mat frame;
     int frame_idx = 0;
 
+    GpuMonitor gpu_monitor;
+    if (gpu_monitor.available())
+        std::cout << "GPU monitoring available (NVML).\n";
+
+    const auto cpu_start  = read_cpu();
+    const auto mem_start  = read_mem();
     const auto wall_start = Clock::now();
 
     while (true) {
@@ -222,6 +230,11 @@ int main(int argc, char** argv) {
                 anonymiser->anonymise(out, det);
             tracking_ms = elapsed_ms(t2, Clock::now());
             tracking_times.push_back(tracking_ms);
+        }
+
+        if (auto s = gpu_monitor.sample()) {
+            gpu_util.push_back(s->util_pct);
+            gpu_mem_mb.push_back(s->proc_mem_mb);
         }
 
         decode_times.push_back(elapsed_ms(t0, t1));
@@ -250,7 +263,9 @@ int main(int argc, char** argv) {
         }
     }
 
-    const double wall_ms = elapsed_ms(wall_start, Clock::now());
+    const double wall_ms  = elapsed_ms(wall_start, Clock::now());
+    const auto   cpu_end  = read_cpu();
+    const auto   mem_end  = read_mem();
 
     if (process_times.empty()) {
         std::cerr << "No frames were processed.\n";
@@ -286,8 +301,29 @@ int main(int argc, char** argv) {
               << "Throughput:\n"
               << "  " << std::setw(6) << inference_fps  << " FPS  (process time only)\n"
               << "  " << std::setw(6) << end_to_end_fps << " FPS  (decode + process)\n"
-              << "  " << std::setw(6) << source_fps     << " FPS  (source)\n"
-              << "=========================================\n";
+              << "  " << std::setw(6) << source_fps     << " FPS  (source)\n";
+
+    const CpuTime cpu_used     = { cpu_end.user_s - cpu_start.user_s, cpu_end.sys_s - cpu_start.sys_s };
+    const int     cores        = cpu_core_count();
+    const double  cpu_util_pct = cpu_used.total() / (wall_ms / 1e3) * 100.0 / cores;
+
+    std::cout << "\n"
+              << "Resource usage:\n"
+              << std::fixed << std::setprecision(1)
+              << "  Memory RSS       " << mem_start.rss_mb << " MB → " << mem_end.rss_mb << " MB"
+              << "   peak " << mem_end.peak_rss_mb << " MB\n"
+              << "  CPU utilisation  " << cpu_util_pct << "% of " << cores << " physical cores"
+              << "  (" << cpu_used.user_s << " s user + " << cpu_used.sys_s << " s sys"
+              << "  /  " << wall_ms / 1e3 << " s wall)\n";
+    if (!gpu_util.empty()) {
+        const auto gu = compute_stats(gpu_util);
+        const auto gm = compute_stats(gpu_mem_mb);
+        std::cout << "  GPU utilisation  mean " << gu.mean << "%   min " << gu.min << "%   max " << gu.max << "%\n"
+                  << "  GPU mem (proc)   mean " << gm.mean << " MB  peak " << gm.max << " MB\n";
+    } else {
+        std::cout << "  GPU utilisation  N/A (NVML not available)\n";
+    }
+    std::cout << "=========================================\n";
 
     return 0;
 }
