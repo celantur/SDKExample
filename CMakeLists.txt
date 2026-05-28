@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 Project(CelanturSDKExample LANGUAGES CXX)
 
 find_package(OpenCV REQUIRED)
-find_package(Boost COMPONENTS json log REQUIRED)
+find_package(Boost COMPONENTS json log program_options REQUIRED)
 find_package(CppProcessing REQUIRED CelanturSDK common-module) 
 
 message("Cpp Processing libraries found: ${CppProcessing_LIBRARIES}")
@@ -42,3 +42,5 @@ target_link_libraries(tracking PRIVATE CppProcessing::CelanturSDK CppProcessing:
 
 add_executable(detect detect.cpp)
 target_link_libraries(detect PRIVATE CppProcessing::CelanturSDK CppProcessing::common-module)
+
+add_subdirectory(benchmarks)
