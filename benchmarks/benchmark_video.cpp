@@ -22,9 +22,23 @@
 
 std::unique_ptr<CelanturSDK::Processor> create_processor() {
     const std::filesystem::path assets_path = std::filesystem::path(boost::dll::program_location().parent_path().string()) / ".." / ".." / "assets";
-    const std::filesystem::path license = assets_path / "license";
-    const std::filesystem::path model   = assets_path / "v6-static-fp32-medium-1280.onnx.enc";
-    const std::filesystem::path plugin  = "/usr/local/lib/libONNXInference.so";
+    const std::filesystem::path license  = assets_path / "license";
+    const std::filesystem::path model    = assets_path / "v6-static-fp32-medium-1280.onnx.enc";
+    const std::filesystem::path compiled = assets_path / "v6-static-fp32-medium-1280.openvino";
+    const std::filesystem::path plugin   = "/usr/local/lib/libOpenVINORuntime.so";
+
+    if (!std::filesystem::exists(compiled)) {
+        CelanturSDK::ModelCompilerParams compiler_params;
+        compiler_params.inference_plugin = plugin;
+        CelanturSDK::ModelCompiler compiler(license, compiler_params);
+        celantur::InferenceEnginePluginCompileSettings compile_settings = compiler.preload_model(model);
+
+        // Optional: override thread count (default: auto-detected)
+        // compile_settings["num_threads"] = std::optional<int>(4);
+
+        std::cout << "Compiling OpenVINO model to " << compiled << "...\n";
+        compiler.compile_model(compile_settings, compiled);
+    }
 
     celantur::ProcessorParams params;
     params.inference_plugin = plugin;
@@ -38,7 +52,7 @@ std::unique_ptr<CelanturSDK::Processor> create_processor() {
     // params.per_type_processing_config[celantur::ObjectClass::Face].blur_strength = 15;
 
     auto processor = std::make_unique<CelanturSDK::Processor>(params, license);
-    celantur::InferenceEnginePluginSettings settings = processor->get_inference_settings(model);
+    celantur::InferenceEnginePluginSettings settings = processor->get_inference_settings(compiled);
 
     // Optional: for small 640-resolution models, set context dimensions:
     // CelanturSDK::AdditionalProcessorParams additional;
@@ -183,7 +197,7 @@ int main(int argc, char** argv) {
 
     std::cout << "Starting benchmark...\n\n";
 
-    std::vector<double> decode_times, process_times, tracking_times;
+    std::vector<double> decode_times, process_times, tracking_times, save_times;
     cv::Mat frame;
     int frame_idx = 0;
 
@@ -213,6 +227,14 @@ int main(int argc, char** argv) {
         decode_times.push_back(elapsed_ms(t0, t1));
         process_times.push_back(elapsed_ms(t1, t2));
 
+        double save_ms = 0.0;
+        if (writer) {
+            const auto t_save = Clock::now();
+            writer->write(out);
+            save_ms = elapsed_ms(t_save, Clock::now());
+            save_times.push_back(save_ms);
+        }
+
         ++frame_idx;
 
         if (frame_idx == 1 || frame_idx % 50 == 0) {
@@ -222,10 +244,10 @@ int main(int argc, char** argv) {
                       << "  process: " << std::setw(7) << process_times.back() << " ms";
             if (use_tracking)
                 std::cout << "  tracking: " << std::setw(7) << tracking_ms << " ms";
+            if (writer)
+                std::cout << "  save: " << std::setw(7) << save_ms << " ms";
             std::cout << "\n";
         }
-
-        if (writer) writer->write(out);
     }
 
     const double wall_ms = elapsed_ms(wall_start, Clock::now());
@@ -258,6 +280,8 @@ int main(int argc, char** argv) {
     print_stats_row("process", proc_s);
     if (use_tracking && !tracking_times.empty())
         print_stats_row("tracking", compute_stats(tracking_times));
+    if (!save_times.empty())
+        print_stats_row("save", compute_stats(save_times));
     std::cout << "\n"
               << "Throughput:\n"
               << "  " << std::setw(6) << inference_fps  << " FPS  (process time only)\n"

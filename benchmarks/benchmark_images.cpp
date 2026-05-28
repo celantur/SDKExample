@@ -23,9 +23,23 @@
 
 std::unique_ptr<CelanturSDK::Processor> create_processor() {
     const std::filesystem::path assets_path = std::filesystem::path(boost::dll::program_location().parent_path().string()) / ".." / ".." / "assets";
-    const std::filesystem::path license = assets_path / "license";
-    const std::filesystem::path model   = assets_path / "v6-static-fp32-medium-1280.onnx.enc";
-    const std::filesystem::path plugin  = "/usr/local/lib/libONNXInference.so";
+    const std::filesystem::path license  = assets_path / "license";
+    const std::filesystem::path model    = assets_path / "v10-static-fp32-medium-1280.onnx.enc";
+    const std::filesystem::path compiled = assets_path / "v10-static-fp32-medium-1280.openvino";
+    const std::filesystem::path plugin   = "/usr/local/lib/libOpenVINORuntime.so";
+
+    if (!std::filesystem::exists(compiled)) {
+        CelanturSDK::ModelCompilerParams compiler_params;
+        compiler_params.inference_plugin = plugin;
+        CelanturSDK::ModelCompiler compiler(license, compiler_params);
+        celantur::InferenceEnginePluginCompileSettings compile_settings = compiler.preload_model(model);
+
+        // Optional: override thread count (default: auto-detected)
+        // compile_settings["num_threads"] = std::optional<int>(4);
+
+        std::cout << "Compiling OpenVINO model to " << compiled << "...\n";
+        compiler.compile_model(compile_settings, compiled);
+    }
 
     celantur::ProcessorParams params;
     params.inference_plugin = plugin;
@@ -39,7 +53,7 @@ std::unique_ptr<CelanturSDK::Processor> create_processor() {
     // params.per_type_processing_config[celantur::ObjectClass::Face].blur_strength = 15;
 
     auto processor = std::make_unique<CelanturSDK::Processor>(params, license);
-    celantur::InferenceEnginePluginSettings settings = processor->get_inference_settings(model);
+    celantur::InferenceEnginePluginSettings settings = processor->get_inference_settings(compiled);
 
     // Optional: for small 640-resolution models, set context dimensions:
     // CelanturSDK::AdditionalProcessorParams additional;
@@ -151,7 +165,7 @@ int main(int argc, char** argv) {
     auto processor = create_processor();
     std::cout << "Processor ready. Starting benchmark...\n\n";
 
-    std::vector<double> load_times, process_times, megapixels, widths, heights;
+    std::vector<double> load_times, process_times, save_times, megapixels, widths, heights;
     load_times.reserve(images.size());
     process_times.reserve(images.size());
 
@@ -175,6 +189,14 @@ int main(int argc, char** argv) {
         const double load_ms    = elapsed_ms(t0, t1);
         const double process_ms = elapsed_ms(t1, t2);
 
+        double save_ms = 0.0;
+        if (!output_dir.empty()) {
+            const auto t3 = Clock::now();
+            cv::imwrite((output_dir / img_path.filename()).string(), out);
+            save_ms = elapsed_ms(t3, Clock::now());
+            save_times.push_back(save_ms);
+        }
+
         load_times.push_back(load_ms);
         process_times.push_back(process_ms);
         megapixels.push_back(static_cast<double>(image.cols * image.rows) / 1e6);
@@ -184,10 +206,10 @@ int main(int argc, char** argv) {
         std::cout << std::left << std::setw(42) << img_path.filename().string()
                   << "  " << image.cols << "x" << image.rows
                   << "  load: "    << std::fixed << std::setprecision(1) << load_ms    << " ms"
-                  << "  process: " << process_ms << " ms\n";
-
+                  << "  process: " << process_ms << " ms";
         if (!output_dir.empty())
-            cv::imwrite((output_dir / img_path.filename()).string(), out);
+            std::cout << "  save: " << save_ms << " ms";
+        std::cout << "\n";
     }
 
     const double wall_ms = elapsed_ms(wall_start, Clock::now());
@@ -218,6 +240,8 @@ int main(int argc, char** argv) {
               << "Per-image timing:\n";
     print_stats_row("process", proc_s);
     print_stats_row("load",    load_s);
+    if (!save_times.empty())
+        print_stats_row("save", compute_stats(save_times));
     std::cout << "\n"
               << "Resolution:\n"
               << "  Avg             " << std::setprecision(0)
