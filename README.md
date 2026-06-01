@@ -12,10 +12,26 @@ The SDK consists of several shared objects and include files,
 that can be linked against and included in your program.
 It is shipped as a Debian package and the files are extracted to `/usr/local/`.
 
-See [Celantur Doc](https://doc.celantur.com/sdk/requirements-and-installation/installation)
+See [our documentation](https://doc.celantur.com/sdk/requirements-and-installation/installation)
 for installation instructions.
 
-## Building examples
+
+## Examples
+
+- `quickstart.cpp`: Use ONNX model and inference engine for a simple demonstration of object segmentation and blurring.
+- `gpu_quickstart.cpp`: Compile ONNX to TensorRT model and run inference on GPU.
+- `tiling.cpp`: Set up tiling and region-of-interest for inference.
+- `object_types.cpp`: Configure object types and thresholds for inference and blurring.
+- `onnx_compilation.cpp`: Configure compilation parameters for ONNX.
+- `openvino_compilation.cpp`: Configure OpenVINO compilation.
+- `openvino_small_model.cpp`: Configure OpenVINO compilation and inference for small models.
+- `tensorrt_compilation.cpp`: Configure TensorRT compilation.
+- `tensorrt_small_model.cpp`: Configure TensorRT compilation and inference for small models.
+- `tracking.cpp`: Video processing and object tracking.
+- `jpeg.cpp`: Proper JPEG processing with EXIF metadata.
+
+
+## Building Examples
 
 The easiest way to compile the examples is using CMake.
 
@@ -42,7 +58,7 @@ target_link_libraries(YourExecutableOrLibrary PRIVATE CppProcessing::CelanturSDK
 If CMake `findPackage` returns an error, check out the [Troubleshooting](#troubleshooting) section.
 
 
-## Run examples
+## Run Examples
 
 ### Assets
 Copy all assets required to `assets/`:
@@ -56,19 +72,8 @@ You can change the file names in the source code.
 
 ### Executables
 
-In `build/`, you find the following executables:
-- `quickstart`: Blurs the image.
-- `processor_parameters_detail`: Same as quickstart but with more parameters
-  (2x2 tiling and blurring of only the top-left quarter of the image).
-- `decoding_encoding`: Image is encoded and decoded with the SDK (instead of OpenCV),
-  and the metadata is conserved in the output image.
-- `inference_tinkering_onnx`: The code shows how to configure the parameters of the ONNX inference engine.
-- `inference_tinkering_openvino`: The code shows how to configure the parameters of the OpenVINO inference engine.
-- `detections_and_thresholds`: The code shows how to filter detections based on threshold,
-  to visualise detections and to generate detection metrics in JSON.
-- `person-vehicle-anon.cpp`: The code shows how to anonymise persons and vehicles with segmentation mask.
-- `small_model.cpp`: The code shows how to use a smaller and faster model for anonymisation on the example of OpenVINO inference engine.
-- `detect.cpp`: How to use SDK to only get detections and don't spend any time on actual blurring.
+In `build/`, you find the examples.
+
 
 ## Troubleshooting
 
