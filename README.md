@@ -27,6 +27,7 @@ for installation instructions.
 - `openvino_small_model.cpp`: Configure OpenVINO compilation and inference for small models.
 - `tensorrt_compilation.cpp`: Configure TensorRT compilation.
 - `tensorrt_small_model.cpp`: Configure TensorRT compilation and inference for small models.
+- `cuda.cpp`: Runs full inference on GPU without accessing CPU memory.
 - `tracking.cpp`: Video processing and object tracking.
 - `jpeg.cpp`: Proper JPEG processing with EXIF metadata.
 
@@ -129,4 +130,3 @@ By default, logging level is set to `INFO`. If you find it too verbose, you can 
 ```bash
 export LOG_LEVEL=WARNING
 ```
-
