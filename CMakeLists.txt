@@ -3,7 +3,7 @@ Project(CelanturSDKExample LANGUAGES CXX)
 
 find_package(OpenCV REQUIRED)
 find_package(Boost COMPONENTS json log REQUIRED)
-find_package(CppProcessing REQUIRED CelanturSDK common-module) 
+find_package(CppProcessing REQUIRED CelanturSDK common-module)
 
 message("Cpp Processing libraries found: ${CppProcessing_LIBRARIES}")
 
@@ -42,3 +42,21 @@ target_link_libraries(tracking PRIVATE CppProcessing::CelanturSDK CppProcessing:
 
 add_executable(detect detect.cpp)
 target_link_libraries(detect PRIVATE CppProcessing::CelanturSDK CppProcessing::common-module)
+
+# GPU inference
+find_package(CUDAToolkit)
+
+if(CUDAToolkit_FOUND)
+    add_executable(gpu_inference gpu_inference.cpp)
+    
+    target_link_libraries(gpu_inference 
+        PRIVATE 
+            CppProcessing::CelanturSDK 
+            CppProcessing::common-module 
+            CUDA::cudart
+    )
+    message(STATUS "CUDA found: gpu_inference will be built.")
+else()
+    # 2. Output an error/warning message without stopping the build
+    message(WARNING "CUDA NOT FOUND: gpu_inference will be skipped, but other targets will still compile.")
+endif()
