@@ -92,8 +92,8 @@ inline celantur::ProcessorParams make_processor_params(const std::filesystem::pa
             {
                 celantur::CelanturClassId::Person,
                 celantur::DetectionProcessingConfig {
-                    celantur::BlurType::Segmentation,
-                    0.3f, 0.0f, 0.2f, true,
+                    celantur::BlurType::None,
+                    0.3f, 0.0f, 0.2f, false,
                     celantur::DetectionType::Segmentation,
                 }
             },
@@ -102,7 +102,7 @@ inline celantur::ProcessorParams make_processor_params(const std::filesystem::pa
                 celantur::CelanturClassId::LicensePlate,
                 celantur::DetectionProcessingConfig {
                     celantur::BlurType::BBox_Rectangle,
-                    0.3f, 0.0f, 1.0f, true,
+                    0.3f, 0.0f, 1.0f, false,
                     celantur::DetectionType::BBox,
                 }
             },
@@ -119,8 +119,8 @@ inline celantur::ProcessorParams make_processor_params(const std::filesystem::pa
             {
                 celantur::CelanturClassId::Face,
                 celantur::DetectionProcessingConfig {
-                    celantur::BlurType::None,
-                    0.3f, 0.0f, 0.2f, false,
+                    celantur::BlurType::BBox_Oval,
+                    0.3f, 0.0f, 0.2f, true,
                     celantur::DetectionType::BBox,
                 }
             },
@@ -148,40 +148,6 @@ inline void process_image(CelanturSDK::Processor& processor, const std::string& 
     const std::filesystem::path out_image_path = output_file(output_name);
     std::cout << "saving result to " << out_image_path << std::endl;
     cv::imwrite(out_image_path, out);
-}
-
-// Same as process_image, but uses the SDK's own JPEG decode/encode functions. This lets us preserve
-// the original EXIF metadata and control the encoding quality, instead of going through OpenCV.
-inline void process_image_with_metadata(CelanturSDK::Processor& processor, const std::string& output_name) {
-    // Load the image binary.
-    std::cout << "loading image from " << image_path << std::endl;
-    std::ifstream image_file(image_path, std::ios::binary);
-    std::vector<unsigned char> image_data((std::istreambuf_iterator<char>(image_file)), std::istreambuf_iterator<char>());
-
-    // Decode the image.
-    cv::Mat decoded_image = celantur::jpeg_decode(image_data.data(), image_data.size());
-
-    // Extract exif metadata from the image and print it.
-    celantur::ExifMetadata metadata = celantur::jpeg_get_exif_metadata(image_data.data(), image_data.size());
-    metadata.print_debug_info(std::cout);
-
-    // Enqueue the image for processing and fetch the result.
-    processor.process(decoded_image);
-    cv::Mat decoded_out = processor.get_result();
-
-    // Discard the detections. Necessary to free up the memory.
-    processor.get_detections();
-
-    // Encode the image back together with metadata. Notice the std::move to transfer the ownership of the
-    // metadata to the encoder. We are using a thin wrapper around exiflib to handle the metadata and there
-    // is no copy constructor defined.
-    std::vector<unsigned char> encoded_image = celantur::jpeg_encode(decoded_out, 95, std::move(metadata));
-
-    // Write to the file.
-    const std::filesystem::path out_image_path = output_file(output_name);
-    std::cout << "saving result with metadata to " << out_image_path << std::endl;
-    std::ofstream output_image(out_image_path, std::ios::binary);
-    output_image.write(reinterpret_cast<const char*>(encoded_image.data()), encoded_image.size());
 }
 
 } // namespace example
