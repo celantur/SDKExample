@@ -10,53 +10,35 @@ message("Cpp Processing libraries found: ${CppProcessing_LIBRARIES}")
 add_executable(quickstart quickstart.cpp)
 target_link_libraries(quickstart PRIVATE CppProcessing::CelanturSDK CppProcessing::common-module)
 
-add_executable(processor_parameters_detail processor_parameters_detail.cpp)
-target_link_libraries(processor_parameters_detail PRIVATE CppProcessing::CelanturSDK CppProcessing::common-module)
+add_executable(parametrisation parametrisation.cpp)
+target_link_libraries(parametrisation PRIVATE CppProcessing::CelanturSDK CppProcessing::common-module)
 
-add_executable(decoding_encoding decoding_encoding.cpp)
-target_link_libraries(decoding_encoding PRIVATE CppProcessing::CelanturSDK CppProcessing::common-module)
+add_executable(onnx onnx.cpp)
+target_link_libraries(onnx PRIVATE CppProcessing::CelanturSDK CppProcessing::common-module)
 
-add_executable(inference_tinkering_onnx inference_tinkering_onnx.cpp)
-target_link_libraries(inference_tinkering_onnx PRIVATE CppProcessing::CelanturSDK CppProcessing::common-module)
+add_executable(openvino openvino.cpp)
+target_link_libraries(openvino PRIVATE CppProcessing::CelanturSDK CppProcessing::common-module)
 
-add_executable(detections_and_thresholds detections_and_thresholds.cpp)
-target_link_libraries(detections_and_thresholds PRIVATE CppProcessing::CelanturSDK CppProcessing::common-module)
-
-add_executable(inference_tinkering_openvino inference_tinkering_openvino.cpp)
-target_link_libraries(inference_tinkering_openvino PRIVATE CppProcessing::CelanturSDK CppProcessing::common-module)
-
-add_executable(person-vehicle-anon person-vehicle-anon.cpp)
-target_link_libraries(person-vehicle-anon PRIVATE CppProcessing::CelanturSDK CppProcessing::common-module)
-
-add_executable(small-model small_model.cpp)
-target_link_libraries(small-model PRIVATE CppProcessing::CelanturSDK CppProcessing::common-module)
-
-add_executable(gpu_quickstart gpu_quickstart.cpp)
-target_link_libraries(gpu_quickstart PRIVATE CppProcessing::CelanturSDK CppProcessing::common-module)
-
-add_executable(gpu_compilation_tinkering gpu_compilation_tinkering.cpp)
-target_link_libraries(gpu_compilation_tinkering PRIVATE CppProcessing::CelanturSDK CppProcessing::common-module)
+add_executable(tensorrt tensorrt.cpp)
+target_link_libraries(tensorrt PRIVATE CppProcessing::CelanturSDK CppProcessing::common-module)
 
 add_executable(tracking tracking.cpp)
 target_link_libraries(tracking PRIVATE CppProcessing::CelanturSDK CppProcessing::common-module)
-
-add_executable(detect detect.cpp)
-target_link_libraries(detect PRIVATE CppProcessing::CelanturSDK CppProcessing::common-module)
 
 # GPU inference
 find_package(CUDAToolkit)
 
 if(CUDAToolkit_FOUND)
-    add_executable(gpu_inference gpu_inference.cpp)
-    
-    target_link_libraries(gpu_inference 
-        PRIVATE 
-            CppProcessing::CelanturSDK 
-            CppProcessing::common-module 
+    add_executable(cuda cuda.cpp)
+
+    target_link_libraries(cuda
+        PRIVATE
+            CppProcessing::CelanturSDK
+            CppProcessing::common-module
             CUDA::cudart
     )
-    message(STATUS "CUDA found: gpu_inference will be built.")
+    message(STATUS "CUDA found: cuda will be built.")
 else()
     # 2. Output an error/warning message without stopping the build
-    message(WARNING "CUDA NOT FOUND: gpu_inference will be skipped, but other targets will still compile.")
+    message(WARNING "CUDA NOT FOUND: cuda will be skipped, but other targets will still compile.")
 endif()

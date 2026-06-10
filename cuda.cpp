@@ -3,20 +3,12 @@
 #include "CelanturSDKGPUInterface.h"
 #include "CommonParameters.h"
 #include "detections-utils.h"
-#include <filesystem>
+#include "example_common.h"
 #include <cuda_runtime.h>
 #include <opencv2/opencv.hpp>
-#include <boost/dll.hpp>
 
-const std::filesystem::path exe_path = boost::dll::program_location().parent_path().string();
-const std::filesystem::path assets_path = exe_path/".."/"assets";
-const std::filesystem::path output_path = exe_path/".."/"output";
-const std::filesystem::path gpu_plugin_location = "/usr/local/lib/libTensorRTRuntime.so";
-const std::filesystem::path license_file = assets_path/"license";
-const std::filesystem::path image_path = assets_path/"image.jpg";
-const std::filesystem::path out_image_path = output_path/"gpu_inference.jpg";
-const std::filesystem::path model_path = assets_path/"v6-static-fp32.onnx.enc";
-const std::filesystem::path model_path_compiled = assets_path/"v6-static-fp32-compiled-gpu.trt";
+const std::filesystem::path model_path = example::asset("v6-static-fp32.onnx.enc");
+const std::filesystem::path model_path_compiled = example::asset("v6-static-fp32-compiled-gpu.trt");
 
 /**
  * This is just utility struct for the purpose of just copying the results from the GPU to the host and postprocessing them there. It is not necessary to do it this way, but it makes it easier to work with the results on the host side.
@@ -159,10 +151,10 @@ int main(int argc, char** argv) {
     // [2026-04-20 06:04:43.248839] [0x00007701a0745000] [info]    Injecting Native NMS and Segmentation Graph...
     // [2026-04-20 06:04:43.249090] [0x00007701a0745000] [info]    NMS and Segmentation Graph Injection Complete.
     CelanturSDK::ModelCompilerParams params;
-    params.inference_plugin = gpu_plugin_location;
+    params.inference_plugin = example::tensorrt_plugin;
     params.inference_plugin_group = celantur::PluginGroup::GPUInferenceEngine;
     
-    CelanturSDK::ModelCompiler compiler(license_file, params);
+    CelanturSDK::ModelCompiler compiler(example::license_file, params);
     celantur::InferenceEnginePluginCompileSettings settings = compiler.preload_model(model_path);
     std::cout << "Compile settings: " << settings << std::endl;
     
@@ -172,8 +164,8 @@ int main(int argc, char** argv) {
     
     // Second, create the inference engine and load the compiled model.
     CelanturSDK::CUDAInferenceEngineParams cuda_params;
-    cuda_params.inference_plugin = gpu_plugin_location;
-    CelanturSDK::CUDAInferenceEngine engine(cuda_params, license_file);
+    cuda_params.inference_plugin = example::tensorrt_plugin;
+    CelanturSDK::CUDAInferenceEngine engine(cuda_params, example::license_file);
     celantur::InferenceEnginePluginSettings rt_settings = engine.get_inference_settings(model_path_compiled);
     std::cout << "Runtime settings: " << rt_settings << std::endl;
     engine.load_inference_model(rt_settings);
@@ -192,7 +184,7 @@ int main(int argc, char** argv) {
     engine.prepare_execution_context(stream, additional_params);
     std::cout << "Prepared execution context for stream " << stream << std::endl;
     
-    cv::Mat img = cv::imread(image_path);
+    cv::Mat img = cv::imread(example::image_path);
     
     uint8_t* d_img = nullptr;
     size_t img_bytes = img.step * img.rows;
@@ -248,7 +240,7 @@ int main(int argc, char** argv) {
     GPUInferenceResultHost2 host_res = GPUInferenceResultHost2::from_device_result(res, stream);
     auto detections = postprocess_injected2(host_res, cv::Size2i(img.cols, img.rows), cv::Size2i(1280, 1280));
     cv::Mat img_out = celantur::visualise_detections(img, detections);
-    cv::imwrite(out_image_path, img_out);
+    cv::imwrite(example::output_file("cuda.jpg"), img_out);
 
     // You can also manually release the execution context and free the memory, but it will be automatically released when the engine is destroyed. 
     

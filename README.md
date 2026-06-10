@@ -18,18 +18,13 @@ for installation instructions.
 
 ## Examples
 
-- `quickstart.cpp`: Use ONNX model and inference engine for a simple demonstration of object segmentation and blurring.
-- `gpu_quickstart.cpp`: Compile ONNX to TensorRT model and run inference on GPU.
-- `tiling.cpp`: Set up tiling and region-of-interest for inference.
-- `object_types.cpp`: Configure object types and thresholds for inference and blurring.
-- `onnx_compilation.cpp`: Configure compilation parameters for ONNX.
-- `openvino_compilation.cpp`: Configure OpenVINO compilation.
-- `openvino_small_model.cpp`: Configure OpenVINO compilation and inference for small models.
-- `tensorrt_compilation.cpp`: Configure TensorRT compilation.
-- `tensorrt_small_model.cpp`: Configure TensorRT compilation and inference for small models.
-- `cuda.cpp`: Runs full inference on GPU without accessing CPU memory.
+- `quickstart.cpp`: Simplest way to anonymise an image on the CPU with the ONNX inference engine, including the SDK's own JPEG decode/encode with EXIF metadata preservation.
+- `parametrisation.cpp`: Configure processor parameters — tiling, region-of-interest, per-class thresholds and per-object-type blurring — plus detection visualisation and metric serialisation.
+- `onnx.cpp`: Tinker with the ONNX (CPU) inference engine settings.
+- `openvino.cpp`: Compile and run a (small) model with the OpenVINO CPU inference engine.
+- `tensorrt.cpp`: Compile and run a model on GPU with TensorRT, choosing precision and optimisation level.
+- `cuda.cpp`: Run full inference on GPU without copying image data back to CPU memory.
 - `tracking.cpp`: Video processing and object tracking.
-- `jpeg.cpp`: Proper JPEG processing with EXIF metadata.
 
 
 ## Building Examples

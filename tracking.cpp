@@ -2,26 +2,20 @@
 #include "CelanturSDKInterface.h"
 #include "CommonParameters.h"
 #include "CompilationParams.h"
-#include <filesystem>
+#include "example_common.h"
 #include <opencv2/opencv.hpp>
-#include <boost/dll.hpp>
 #include <set>
 #include <tuple>
 
-const std::filesystem::path exe_path = boost::dll::program_location().parent_path().string();
-const std::filesystem::path assets_path = exe_path/".."/"assets";
-const std::filesystem::path output_path = exe_path/".."/"output";
-const std::filesystem::path gpu_plugin_location = "/app/output/lib/libTensorRTRuntime.so";
-const std::filesystem::path license_file = assets_path/"license";
-const std::filesystem::path video_path = assets_path/"video.mp4";
-const std::filesystem::path out_video_path = output_path/"video.mp4";
-const std::filesystem::path model_path = assets_path/"v8-static-fp32-small-640.onnx.enc";
-const std::filesystem::path model_path_compiled = assets_path/"v8-static-fp32-small-640.trt.enc";
+const std::filesystem::path video_path = example::asset("video.mp4");
+const std::filesystem::path model_path = example::asset("v8-static-fp32-small-640.onnx.enc");
+const std::filesystem::path model_path_compiled = example::asset("v8-static-fp32-small-640.trt.enc");
 
 /**
-    The purpose of this example is to show how one can improve the detection results for videos with tracking 
+    The purpose of this example is to show how one can improve the detection results for videos with tracking
 */
 void process_video_with_tracking(CelanturSDK::Processor& processor, CelanturSDK::Tracker& tracker, CelanturSDK::Anonymiser& anonymiser) {
+    const std::filesystem::path out_video_path = example::output_file("video.mp4");
     cv::VideoCapture cap(video_path.string());
 
     if (!cap.isOpened()) {
@@ -33,10 +27,10 @@ void process_video_with_tracking(CelanturSDK::Processor& processor, CelanturSDK:
     int frame_width  = static_cast<int>(cap.get(cv::CAP_PROP_FRAME_WIDTH));
     int frame_height = static_cast<int>(cap.get(cv::CAP_PROP_FRAME_HEIGHT));
     double fps       = cap.get(cv::CAP_PROP_FPS);
-    
+
     cv::VideoWriter writer(out_video_path.string(),
                            cv::VideoWriter::fourcc('M','J','P','G'),
-                           fps, 
+                           fps,
                            cv::Size(frame_width, frame_height));
 
     if (!writer.isOpened()) {
@@ -82,16 +76,14 @@ void process_video_with_tracking(CelanturSDK::Processor& processor, CelanturSDK:
 }
 
 int main(int argc, char** argv) {
-    std::filesystem::create_directories(output_path);
-
     // First, compile tensor rt model if it does not exist
     if (!std::filesystem::exists(model_path_compiled)) {
         // Preload model to get to the compilation settings
         CelanturSDK::ModelCompilerParams compiler_params;
-        compiler_params.inference_plugin = gpu_plugin_location;
-        CelanturSDK::ModelCompiler compiler(license_file, compiler_params);
+        compiler_params.inference_plugin = example::tensorrt_plugin;
+        CelanturSDK::ModelCompiler compiler(example::license_file, compiler_params);
         celantur::InferenceEnginePluginCompileSettings settings = compiler.preload_model(model_path);
-       
+
         // TensorRT has some specific settings we can modify; for example, we can set the precision and optimisation level
         // As this is an example, we opt for low optimisation level and FP32 precision for fast compilation
         std::cout << "Model compiler parameters:" << std::endl;
@@ -108,15 +100,15 @@ int main(int argc, char** argv) {
     // Second, start the processor with the compiled model
     celantur::ProcessorParams params;
     params.n_tiles_x = 2;
-    // Manually point to the CPU inference plugin
-    params.inference_plugin = gpu_plugin_location;
-    std::cout << "Looking for license at " << license_file << std::endl;
+    // Manually point to the GPU inference plugin
+    params.inference_plugin = example::tensorrt_plugin;
+    std::cout << "Looking for license at " << example::license_file << std::endl;
 
     // OpenCV uses by default BGR, but the Celantur SDK uses RGB so we need to set swapRB to true
     params.swapRB = true;
 
     // Start the processor with given parameters and license file
-    CelanturSDK::Processor processor(params, license_file);
+    CelanturSDK::Processor processor(params, example::license_file);
 
     // Get the available inference engine settings and their default values
     celantur::InferenceEnginePluginSettings settings = processor.get_inference_settings(model_path_compiled);
@@ -128,13 +120,10 @@ int main(int argc, char** argv) {
     processor.load_inference_model(settings, CelanturSDK::AdditionalProcessorParams{640, 640});
 
     // To perform tracking we need separate anonymiser and tracker objects.
-    CelanturSDK::Tracker tracker(license_file);
-    CelanturSDK::Anonymiser anonymiser(license_file, params.per_type_processing_config);
+    CelanturSDK::Tracker tracker(example::license_file);
+    CelanturSDK::Anonymiser anonymiser(example::license_file, params.per_type_processing_config);
 
     process_video_with_tracking(processor, tracker, anonymiser);
 
     return 0;
 }
-
-
-
