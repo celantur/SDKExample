@@ -5,20 +5,22 @@
 #include <opencv2/opencv.hpp>
 
 /**
-    The purpose of this example is to show how to compile and run a model with the OpenVINO CPU inference engine.
-    It combines two aspects:
-      - Compiling an ONNX model to the OpenVINO format and inspecting/overriding compilation settings (e.g. thread count).
-      - Running inference with a smaller model, which gives a performance benefit on CPU but requires
-        setting the context size via AdditionalProcessorParams to match the model input size.
+    The purpose of this example is to show how to compile and run a model with the OpenVINO CPU inference engine,
+    including inspecting/overriding compilation settings (e.g. thread count).
+
+    By default it runs the full model. At the bottom of each relevant step you will find the commented-out
+    "small model" variant: a smaller model (640) runs faster on CPU but requires setting the context size via
+    AdditionalProcessorParams to match the model input size.
  */
 
-// If using the full model size 1280, set the context size accordingly. A small (640) model
-// runs faster on CPU but requires the context size to match the model input size.
-constexpr int context_size = 640;
-
 int main(int argc, char** argv) {
-    const std::filesystem::path model_path = example::asset("v8-static-fp32-small-640.onnx.enc");
-    const std::filesystem::path model_path_compiled = example::asset("v6-static-fp32-small-640.openvino");
+    const std::filesystem::path model_path = example::asset("v6-static-fp32.onnx.enc");
+    const std::filesystem::path model_path_compiled = example::asset("v6-static-fp32-compiled.openvino.enc");
+
+    // Small model variant: faster on CPU, requires a matching context size (see below).
+    // const std::filesystem::path model_path = example::asset("v8-static-fp32-small-640.onnx.enc");
+    // const std::filesystem::path model_path_compiled = example::asset("v6-static-fp32-small-640.openvino");
+    // constexpr int context_size = 640;
 
     // First, compile the OpenVINO model if it does not exist
     if (!std::filesystem::exists(model_path_compiled)) {
@@ -63,15 +65,16 @@ int main(int argc, char** argv) {
         std::cout << pair.first  << std::endl;
     }
 
-    // Set additional processor parameters to take care of the smaller model size.
-    // The context size must match the model input size (640x640 for the small model).
-    CelanturSDK::AdditionalProcessorParams additional_params;
-    additional_params.context_height = context_size;
-    additional_params.context_width = context_size;
-
     // Load the compiled inference model.
     std::cout << "load model from " << model_path << std::endl;
-    processor.load_inference_model(settings, additional_params);
+    processor.load_inference_model(settings);
+
+    // Small model variant: set the context size to match the model input size (640x640) and load
+    // the model with these additional parameters instead of the plain load_inference_model above.
+    // CelanturSDK::AdditionalProcessorParams additional_params;
+    // additional_params.context_height = context_size;
+    // additional_params.context_width = context_size;
+    // processor.load_inference_model(settings, additional_params);
 
     // Load some image for processing
     std::cout << "loading image from " << example::image_path << std::endl;

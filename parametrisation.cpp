@@ -4,6 +4,7 @@
 #include "detections-utils.h"
 #include "example_common.h"
 #include <fstream>
+#include <map>
 #include <sstream>
 #include <opencv2/opencv.hpp>
 
@@ -12,8 +13,11 @@
     It combines several aspects:
       - Processor parameters such as tiling and the region of interest (ROI) that the image is processed in.
       - Per-class detection thresholds.
-      - Per-object-type processing: which classes to anonymise and how (here, segmentation-blurring
-        persons and vehicles while leaving faces and license plates untouched).
+      - Per-object-type processing via DetectionProcessingConfig, showcasing every BlurType / DetectionType:
+          * Person:        fully blurred using the segmentation mask.
+          * License plate: blurred with a rectangular shape.
+          * Vehicle:       detected only (no blur) using a segmentation mask; the count is printed.
+          * Face:          detected only (no blur) using a bounding box; the count is printed.
       - Visualising detections and serialising metrics for debugging.
  */
 
@@ -47,20 +51,50 @@ int main(int argc, char** argv) {
     thresholds.license_plate = 0.1f;
     params.thresholds = thresholds;
 
-    // Configure per-object-type processing: segmentation-blur persons and vehicles,
-    // while leaving faces and license plates untouched.
+    // Configure per-object-type processing. Each DetectionProcessingConfig is initialised positionally:
+    //   { blur_type, gradient_start, gradient_stop, kernel_size, beautify_blur, detection_type }
+    // Use BlurType::None together with a DetectionType to detect a class without anonymising it.
     const celantur::PerTypeProcessingConfig anonymisation_config
     (
         {
-            {celantur::CelanturClassId::LicensePlate, {celantur::BlurType::None}},
-            {celantur::CelanturClassId::Person, {celantur::BlurType::Segmentation}},
-            {celantur::CelanturClassId::Face, {celantur::BlurType::None}},
-            {celantur::CelanturClassId::Vehicle, {celantur::BlurType::Segmentation}},
+            // Person: fully blurred using the segmentation mask.
+            {
+                celantur::CelanturClassId::Person,
+                celantur::DetectionProcessingConfig {
+                    celantur::BlurType::Segmentation,
+                    0.3f, 0.0f, 0.2f, true,
+                    celantur::DetectionType::Segmentation,
+                }
+            },
+            // License plate: blurred with a rectangular shape.
+            {
+                celantur::CelanturClassId::LicensePlate,
+                celantur::DetectionProcessingConfig {
+                    celantur::BlurType::BBox_Rectangle,
+                    0.3f, 0.0f, 1.0f, true,
+                    celantur::DetectionType::BBox,
+                }
+            },
+            // Vehicle: detected only (no blur) using a segmentation mask.
+            {
+                celantur::CelanturClassId::Vehicle,
+                celantur::DetectionProcessingConfig {
+                    celantur::BlurType::None,
+                    0.3f, 0.0f, 0.2f, false,
+                    celantur::DetectionType::Segmentation,
+                }
+            },
+            // Face: detected only (no blur) using a bounding box.
+            {
+                celantur::CelanturClassId::Face,
+                celantur::DetectionProcessingConfig {
+                    celantur::BlurType::None,
+                    0.3f, 0.0f, 0.2f, false,
+                    celantur::DetectionType::BBox,
+                }
+            },
         }
     );
-
-    // Another option is to use predefined configurations:
-    // const celantur::PerTypeProcessingConfig anonymisation_config = celantur::PERSON_VEHICLE_PROCESSING_CONFIG;
 
     params.per_type_processing_config = anonymisation_config;
 
@@ -85,6 +119,14 @@ int main(int argc, char** argv) {
     // Get the detections and draw them on the image
     std::vector<celantur::CelanturDetection> dets = processor.get_detections();
     cv::Mat result = celantur::visualise_detections(out, dets);
+
+    // Count detections per class (handy for the detect-only classes such as vehicles and faces)
+    std::map<int, int> class_counts;
+    for (const celantur::CelanturDetection& det : dets) {
+        class_counts[det.class_id]++;
+    }
+    std::cout << "Detected vehicles: " << class_counts[static_cast<int>(celantur::CelanturClassId::Vehicle)] << std::endl;
+    std::cout << "Detected faces: " << class_counts[static_cast<int>(celantur::CelanturClassId::Face)] << std::endl;
 
     // output metrics to file
     std::ofstream metadata_json_file(example::output_file("metadata.json"));
