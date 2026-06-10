@@ -16,8 +16,7 @@
  */
 
 int main(int argc, char** argv) {
-    const std::filesystem::path model_path = example::asset("v6-static-fp32.onnx.enc");
-    const std::filesystem::path model_path_compiled = example::asset("v6-static-fp32-compiled.trt");
+    const std::filesystem::path model_path_compiled = example::asset("v10-static-fp32-medium-1280.trt.enc");
 
     // First, compile tensor rt model if it does not exist
     if (!std::filesystem::exists(model_path_compiled)) {
@@ -25,7 +24,7 @@ int main(int argc, char** argv) {
         CelanturSDK::ModelCompilerParams compiler_params;
         compiler_params.inference_plugin = example::tensorrt_plugin;
         CelanturSDK::ModelCompiler compiler(example::license_file, compiler_params);
-        celantur::InferenceEnginePluginCompileSettings settings = compiler.preload_model(model_path);
+        celantur::InferenceEnginePluginCompileSettings settings = compiler.preload_model(example::model_path);
 
         // Fast-compiling profile: FP32 precision and Low optimisation level.
         settings["precision"] = celantur::CompilePrecision::FP32;
@@ -61,7 +60,7 @@ int main(int argc, char** argv) {
     }
 
     // Load the compiled inference model.
-    std::cout << "load model from " << model_path << std::endl;
+    std::cout << "load model from " << example::model_path << std::endl;
     processor.load_inference_model(settings);
 
     // Load some image for processing

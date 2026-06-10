@@ -8,8 +8,7 @@
 #include <tuple>
 
 const std::filesystem::path video_path = example::asset("video.mp4");
-const std::filesystem::path model_path = example::asset("v8-static-fp32-small-640.onnx.enc");
-const std::filesystem::path model_path_compiled = example::asset("v8-static-fp32-small-640.trt.enc");
+const std::filesystem::path model_path_compiled = example::asset("v10-static-fp32-medium-1280.trt.enc");
 
 /**
     The purpose of this example is to show how one can improve the detection results for videos with tracking
@@ -82,7 +81,7 @@ int main(int argc, char** argv) {
         CelanturSDK::ModelCompilerParams compiler_params;
         compiler_params.inference_plugin = example::tensorrt_plugin;
         CelanturSDK::ModelCompiler compiler(example::license_file, compiler_params);
-        celantur::InferenceEnginePluginCompileSettings settings = compiler.preload_model(model_path);
+        celantur::InferenceEnginePluginCompileSettings settings = compiler.preload_model(example::model_path);
 
         // TensorRT has some specific settings we can modify; for example, we can set the precision and optimisation level
         // As this is an example, we opt for low optimisation level and FP32 precision for fast compilation
@@ -116,7 +115,7 @@ int main(int argc, char** argv) {
     std::cout << settings << std::endl;
 
     // Load the compiled inference model.
-    std::cout << "load model from " << model_path << std::endl;
+    std::cout << "load model from " << example::model_path << std::endl;
     processor.load_inference_model(settings, CelanturSDK::AdditionalProcessorParams{640, 640});
 
     // To perform tracking we need separate anonymiser and tracker objects.

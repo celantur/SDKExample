@@ -22,6 +22,7 @@ inline const std::filesystem::path output_path = exe_path / ".." / "output";
 // Assets shared by (almost) every example.
 inline const std::filesystem::path license_file = assets_path / "license";
 inline const std::filesystem::path image_path   = assets_path / "image.jpg";
+inline const std::filesystem::path model_path   = assets_path / "v10-static-fp32-medium-1280.onnx.enc";
 
 // Inference plugins shipped with the SDK.
 inline const std::filesystem::path onnx_plugin     = "/usr/local/lib/libONNXInference.so";

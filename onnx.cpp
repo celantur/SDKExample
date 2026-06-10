@@ -10,8 +10,6 @@
  */
 
 int main(int argc, char** argv) {
-    const std::filesystem::path model_path = example::asset("v6-static-fp32.onnx.enc");
-
     celantur::ProcessorParams params;
 
     // Manually point to the CPU inference plugin
@@ -25,7 +23,7 @@ int main(int argc, char** argv) {
     CelanturSDK::Processor processor(params, example::license_file);
 
     // Get the available inference engine settings and their default values
-    celantur::InferenceEnginePluginSettings settings = processor.get_inference_settings(model_path);
+    celantur::InferenceEnginePluginSettings settings = processor.get_inference_settings(example::model_path);
     std::cout << "Inference engine parameters:" << std::endl;
     for (const std::pair<std::string, std::any>& pair : settings) {
         std::cout << pair.first  << std::endl;
@@ -38,7 +36,7 @@ int main(int argc, char** argv) {
     settings["optimisation_level"] = celantur::OptimisationLevel::Full;
 
     // Load the inference model. Should be provided by Celantur; the settings are provided to the load_inference_model function
-    std::cout << "load model from " << model_path << std::endl;
+    std::cout << "load model from " << example::model_path << std::endl;
     processor.load_inference_model(settings);
 
     // Load some image for processing
