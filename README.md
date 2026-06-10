@@ -18,8 +18,7 @@ for installation instructions.
 
 ## Examples
 
-- `quickstart.cpp`: Simplest way to anonymise an image on the CPU with the ONNX inference engine, including the SDK's own JPEG decode/encode with EXIF metadata preservation.
-- `parametrisation.cpp`: Configure processor parameters — tiling, region-of-interest, per-class thresholds and per-object-type blurring — plus detection visualisation and metric serialisation.
+- `quickstart.cpp`: Anonymise an image on the CPU with the ONNX inference engine. Covers configuring processor parameters (tiling, region-of-interest, per-class thresholds and per-object-type blurring), detection visualisation and metric serialisation, and the SDK's own JPEG decode/encode with EXIF metadata preservation.
 - `onnx.cpp`: Tinker with the ONNX (CPU) inference engine settings.
 - `openvino.cpp`: Compile and run a (small) model with the OpenVINO CPU inference engine.
 - `tensorrt.cpp`: Compile and run a model on GPU with TensorRT, choosing precision and optimisation level.

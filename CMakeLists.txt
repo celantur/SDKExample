@@ -10,9 +10,6 @@ message("Cpp Processing libraries found: ${CppProcessing_LIBRARIES}")
 add_executable(quickstart quickstart.cpp)
 target_link_libraries(quickstart PRIVATE CppProcessing::CelanturSDK CppProcessing::common-module)
 
-add_executable(parametrisation parametrisation.cpp)
-target_link_libraries(parametrisation PRIVATE CppProcessing::CelanturSDK CppProcessing::common-module)
-
 add_executable(onnx onnx.cpp)
 target_link_libraries(onnx PRIVATE CppProcessing::CelanturSDK CppProcessing::common-module)
 

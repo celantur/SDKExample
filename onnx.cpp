@@ -10,14 +10,9 @@
  */
 
 int main(int argc, char** argv) {
-    celantur::ProcessorParams params;
-
-    // Manually point to the CPU inference plugin
-    params.inference_plugin = example::onnx_plugin;
+    // Build the shared processor configuration for the CPU (ONNX) inference plugin
+    celantur::ProcessorParams params = example::make_processor_params(example::onnx_plugin);
     std::cout << "Looking for license at " << example::license_file << std::endl;
-
-    // OpenCV uses by default BGR, but the Celantur SDK uses RGB so we need to set swapRB to true
-    params.swapRB = true;
 
     // Start the processor with given parameters and license file
     CelanturSDK::Processor processor(params, example::license_file);
@@ -39,23 +34,8 @@ int main(int argc, char** argv) {
     std::cout << "load model from " << example::model_path << std::endl;
     processor.load_inference_model(settings);
 
-    // Load some image for processing
-    std::cout << "loading image from " << example::image_path << std::endl;
-    cv::Mat image = cv::imread(example::image_path);
-
-    // Enqueue the image for processing
-    processor.process(image);
-
-    // Get the result
-    cv::Mat out = processor.get_result();
-
-    // Discard the detections. Necessary to free up the memory.
-    processor.get_detections();
-
-    // Save the result
-    const std::filesystem::path out_image_path = example::output_file("onnx.jpg");
-    std::cout << "saving result to " << out_image_path << std::endl;
-    cv::imwrite(out_image_path, out);
+    // Process the shared example image and save the result
+    example::process_image(processor, "onnx.jpg");
 
     return 0;
 }

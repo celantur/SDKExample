@@ -97,14 +97,8 @@ int main(int argc, char** argv) {
     }
 
     // Second, start the processor with the compiled model
-    celantur::ProcessorParams params;
-    params.n_tiles_x = 2;
-    // Manually point to the GPU inference plugin
-    params.inference_plugin = example::tensorrt_plugin;
+    celantur::ProcessorParams params = example::make_processor_params(example::tensorrt_plugin);
     std::cout << "Looking for license at " << example::license_file << std::endl;
-
-    // OpenCV uses by default BGR, but the Celantur SDK uses RGB so we need to set swapRB to true
-    params.swapRB = true;
 
     // Start the processor with given parameters and license file
     CelanturSDK::Processor processor(params, example::license_file);
