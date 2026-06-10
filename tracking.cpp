@@ -1,19 +1,22 @@
 #include "CelanturDetection.h"
 #include "CelanturSDKInterface.h"
 #include "CommonParameters.h"
+#include "CompilationParams.h"
 #include <filesystem>
 #include <opencv2/opencv.hpp>
 #include <boost/dll.hpp>
+#include <set>
+#include <tuple>
 
 const std::filesystem::path exe_path = boost::dll::program_location().parent_path().string();
 const std::filesystem::path assets_path = exe_path/".."/"assets";
 const std::filesystem::path output_path = exe_path/".."/"output";
-const std::filesystem::path gpu_plugin_location = "/usr/local/lib/libTensorRTRuntime.so";
+const std::filesystem::path gpu_plugin_location = "/app/output/lib/libTensorRTRuntime.so";
 const std::filesystem::path license_file = assets_path/"license";
 const std::filesystem::path video_path = assets_path/"video.mp4";
 const std::filesystem::path out_video_path = output_path/"video.mp4";
-const std::filesystem::path model_path = assets_path/"v6-static-fp32.onnx.enc";
-const std::filesystem::path model_path_compiled = assets_path/"v6-static-fp32-compiled.trt";
+const std::filesystem::path model_path = assets_path/"v8-static-fp32-small-640.onnx.enc";
+const std::filesystem::path model_path_compiled = assets_path/"v8-static-fp32-small-640.trt.enc";
 
 /**
     The purpose of this example is to show how one can improve the detection results for videos with tracking 
@@ -91,8 +94,11 @@ int main(int argc, char** argv) {
        
         // TensorRT has some specific settings we can modify; for example, we can set the precision and optimisation level
         // As this is an example, we opt for low optimisation level and FP32 precision for fast compilation
+        std::cout << "Model compiler parameters:" << std::endl;
+        std::cout << settings << std::endl;
         settings["precision"] = celantur::CompilePrecision::FP32;
         settings["optimisation_level"] = celantur::OptimisationLevel::Low;
+        settings["min_opt_max_dims"] = celantur::MinOptMaxDims{std::make_tuple(640,640,640)};
 
         // Now compile the model
         std::cout << "Compiling model to " << model_path_compiled << std::endl;
@@ -101,6 +107,7 @@ int main(int argc, char** argv) {
 
     // Second, start the processor with the compiled model
     celantur::ProcessorParams params;
+    params.n_tiles_x = 2;
     // Manually point to the CPU inference plugin
     params.inference_plugin = gpu_plugin_location;
     std::cout << "Looking for license at " << license_file << std::endl;
@@ -114,13 +121,11 @@ int main(int argc, char** argv) {
     // Get the available inference engine settings and their default values
     celantur::InferenceEnginePluginSettings settings = processor.get_inference_settings(model_path_compiled);
     std::cout << "Inference engine parameters:" << std::endl;
-    for (const std::pair<std::string, std::any>& pair : settings) {
-        std::cout << pair.first  << std::endl;
-    }
+    std::cout << settings << std::endl;
 
     // Load the compiled inference model.
     std::cout << "load model from " << model_path << std::endl;
-    processor.load_inference_model(settings);
+    processor.load_inference_model(settings, CelanturSDK::AdditionalProcessorParams{640, 640});
 
     // To perform tracking we need separate anonymiser and tracker objects.
     CelanturSDK::Tracker tracker(license_file);
