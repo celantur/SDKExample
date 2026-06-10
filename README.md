@@ -12,10 +12,21 @@ The SDK consists of several shared objects and include files,
 that can be linked against and included in your program.
 It is shipped as a Debian package and the files are extracted to `/usr/local/`.
 
-See [Celantur Doc](https://doc.celantur.com/sdk/requirements-and-installation/installation)
+See [our documentation](https://doc.celantur.com/sdk/requirements-and-installation/installation)
 for installation instructions.
 
-## Building examples
+
+## Examples
+
+- `quickstart.cpp`: Anonymise an image on the CPU with the ONNX inference engine. Covers configuring processor parameters (tiling, region-of-interest, per-class thresholds and per-object-type blurring), detection visualisation and metric serialisation, and the SDK's own JPEG decode/encode with EXIF metadata preservation.
+- `onnx.cpp`: Tinker with the ONNX (CPU) inference engine settings.
+- `openvino.cpp`: Compile and run a (small) model with the OpenVINO CPU inference engine.
+- `tensorrt.cpp`: Compile and run a model on GPU with TensorRT, choosing precision and optimisation level.
+- `cuda.cpp`: Run full inference on GPU without copying image data back to CPU memory.
+- `tracking.cpp`: Video processing and object tracking.
+
+
+## Building Examples
 
 The easiest way to compile the examples is using CMake.
 
@@ -42,7 +53,7 @@ target_link_libraries(YourExecutableOrLibrary PRIVATE CppProcessing::CelanturSDK
 If CMake `findPackage` returns an error, check out the [Troubleshooting](#troubleshooting) section.
 
 
-## Run examples
+## Run Examples
 
 ### Assets
 Copy all assets required to `assets/`:
@@ -56,19 +67,8 @@ You can change the file names in the source code.
 
 ### Executables
 
-In `build/`, you find the following executables:
-- `quickstart`: Blurs the image.
-- `processor_parameters_detail`: Same as quickstart but with more parameters
-  (2x2 tiling and blurring of only the top-left quarter of the image).
-- `decoding_encoding`: Image is encoded and decoded with the SDK (instead of OpenCV),
-  and the metadata is conserved in the output image.
-- `inference_tinkering_onnx`: The code shows how to configure the parameters of the ONNX inference engine.
-- `inference_tinkering_openvino`: The code shows how to configure the parameters of the OpenVINO inference engine.
-- `detections_and_thresholds`: The code shows how to filter detections based on threshold,
-  to visualise detections and to generate detection metrics in JSON.
-- `person-vehicle-anon.cpp`: The code shows how to anonymise persons and vehicles with segmentation mask.
-- `small_model.cpp`: The code shows how to use a smaller and faster model for anonymisation on the example of OpenVINO inference engine.
-- `detect.cpp`: How to use SDK to only get detections and don't spend any time on actual blurring.
+In `build/`, you find the examples.
+
 
 ## Troubleshooting
 
@@ -124,4 +124,3 @@ By default, logging level is set to `INFO`. If you find it too verbose, you can 
 ```bash
 export LOG_LEVEL=WARNING
 ```
-
