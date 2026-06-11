@@ -10,6 +10,21 @@
 const std::filesystem::path model_path_compiled = example::asset("v10-static-fp32-medium-1280-cuda.trt.enc");
 
 /**
+    The purpose of this example is to show how to run inference fully on the GPU using the low-level
+    CUDAInferenceEngine, keeping the image data on the device the whole time.
+
+    Unlike the other examples it does not use the high-level CelanturSDK::Processor. Instead it:
+      - Compiles a GPU-specific model (with NMS and segmentation graph injected for on-device postprocessing).
+      - Creates a CUDA stream and prepares an execution context for it.
+      - Uploads the image to the GPU, preprocesses it into the model's context size, runs inference, and
+        retrieves the raw device result.
+
+    The helper struct and postprocessing function below are NOT part of the SDK; they exist only to copy
+    the raw GPU output back to the host so the detections can be visualised. A real GPU application would
+    typically keep everything on the device.
+ */
+
+/**
  * This is just utility struct for the purpose of just copying the results from the GPU to the host and postprocessing them there. It is not necessary to do it this way, but it makes it easier to work with the results on the host side.
  * In a real gpu application you probably don't want this data to ever leave the GPU, but for the purpose of this example and to visualise things more easily, we copy the results to the host and postprocess them there.
  */

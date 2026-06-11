@@ -1,101 +1,86 @@
-Celantur SDK Examples
-=====================
+# Celantur SDK Examples
 
-The [Celantur](https://www.celantur.com) SDK provides privacy-preserving image blurring through
-automatic anonymisation of faces and license plates.
+The [Celantur](https://www.celantur.com) SDK provides privacy-preserving image blurring through automatic anonymisation of faces and license plates.
 
-In this repository you find a lot of example code how to use [Celantur SDK](https://doc.celantur.com/sdk/getting-started).
+This repository contains example programs that show how to integrate the [Celantur SDK](https://doc.celantur.com/sdk/getting-started) into your application.
 
-## Prerequisite
+## Prerequisites
 
-The SDK consists of several shared objects and include files,
-that can be linked against and included in your program.
-It is shipped as a Debian package and the files are extracted to `/usr/local/`.
+The SDK is shipped as a Debian package. Shared libraries and headers are installed under `/usr/local/`.
 
-See [our documentation](https://doc.celantur.com/sdk/requirements-and-installation/installation)
-for installation instructions.
-
+See the [installation guide](https://doc.celantur.com/sdk/requirements-and-installation/installation) for setup instructions.
 
 ## Examples
 
-- `quickstart.cpp`: Anonymise an image on the CPU with the ONNX inference engine. Covers configuring processor parameters (tiling, region-of-interest, per-class thresholds and per-object-type blurring), detection visualisation and metric serialisation, and the SDK's own JPEG decode/encode with EXIF metadata preservation.
-- `onnx.cpp`: Tinker with the ONNX (CPU) inference engine settings.
-- `openvino.cpp`: Compile and run a (small) model with the OpenVINO CPU inference engine.
-- `tensorrt.cpp`: Compile and run a model on GPU with TensorRT, choosing precision and optimisation level.
-- `cuda.cpp`: Run full inference on GPU without copying image data back to CPU memory.
-- `tracking.cpp`: Video processing and object tracking.
+Start with [quickstart.cpp](quickstart.cpp), then explore the other examples as needed.
 
+| Example | What it demonstrates |
+| --- | --- |
+| [quickstart.cpp](quickstart.cpp) | Minimal CPU anonymisation with the ONNX inference engine, plus tuning inference settings such as thread count and optimisation level. |
+| [jpeg.cpp](jpeg.cpp) | Full CPU workflow: JPEG decode/encode with EXIF preservation, detection visualisation, per-class counts, and metric serialisation. |
+| [openvino.cpp](openvino.cpp) | Compile and run a model with the OpenVINO CPU inference engine. |
+| [tensorrt.cpp](tensorrt.cpp) | Compile and run a model on GPU with TensorRT, including precision and optimisation level. |
+| [tracking.cpp](tracking.cpp) | Video processing with object tracking using a smaller model. |
+| [cuda.cpp](cuda.cpp) | Full GPU inference pipeline without copying image data back to the CPU. |
 
-## Building Examples
+Shared paths, processor defaults, and the common OpenCV image-processing helper live in [example_common.h](example_common.h).
 
-The easiest way to compile the examples is using CMake.
+## Building
 
-First, create CMake configuration files in the repo folder:
+The easiest way to build the examples is with CMake:
 
 ```bash
 mkdir -p build/
-# Create configuration files
 cmake -S . -B build/
-# Build the binaries
-cd build/
-make
+cmake --build build/
 ```
 
-In `CMakeLists.txt` you can use the `findPackage` directive to add libraries and link targets
-into your program, e.g.:
+To link the SDK in your own project:
 
-```bash
+```cmake
 find_package(CppProcessing REQUIRED CelanturSDK common-module)
-...
-target_link_libraries(YourExecutableOrLibrary PRIVATE CppProcessing::CelanturSDK CppProcessing::common-module)
+target_link_libraries(YourExecutable PRIVATE CppProcessing::CelanturSDK CppProcessing::common-module)
 ```
 
-If CMake `findPackage` returns an error, check out the [Troubleshooting](#troubleshooting) section.
+If `find_package` fails, see [Troubleshooting](#troubleshooting).
 
-
-## Run Examples
+## Running
 
 ### Assets
-Copy all assets required to `assets/`:
-- `license`: License file.
-- `v6-static-fp32.onnx.enc`: Encrypted model.
-- `image.jpg`: Test images.
 
-In case you were provided with some custom models, such as less-precise but faster models, your model name can be different.
+Copy the required files into `assets/`:
 
-You can change the file names in the source code.
+| File | Purpose |
+| --- | --- |
+| `license` | License file |
+| `v10-static-fp32-medium-1280.onnx.enc` | Encrypted model (default in the examples) |
+| `image.jpg` | Test image |
+
+If you were given custom models, update the model path in [example_common.h](example_common.h) or in the relevant example source file.
 
 ### Executables
 
-In `build/`, you find the examples.
+After building, run the examples from `build/`:
 
+```bash
+./quickstart
+./jpeg
+./openvino
+# ...
+```
 
 ## Troubleshooting
 
-### CppProcessing is not found
+### `CppProcessing` is not found
 
 ```
 CMake Error at CMakeLists.txt:10 (find_package):
   By not providing "FindCppProcessing.cmake" in CMAKE_MODULE_PATH this
   project has asked CMake to find a package configuration file provided by
   "CppProcessing", but CMake did not find one.
-
-  Could not find a package configuration file provided by "CppProcessing"
-  with any of the following names:
-
-    CppProcessingConfig.cmake
-    cppprocessing-config.cmake
-
-  Add the installation prefix of "CppProcessing" to CMAKE_PREFIX_PATH or set
-  "CppProcessing_DIR" to a directory containing one of the above files.  If
-  "CppProcessing" provides a separate development package or SDK, be sure it
-  has been installed.
-
 ```
 
-#### Solution
-
-Add `-DCppProcessing_DIR=/usr/local/lib/cmake` to the cmake configuration.
+**Solution:** point CMake at the SDK config directory:
 
 ```bash
 cmake -S . -B build/ -DCppProcessing_DIR=/usr/local/lib/cmake
@@ -104,22 +89,20 @@ cmake -S . -B build/ -DCppProcessing_DIR=/usr/local/lib/cmake
 ### Error loading shared libraries
 
 ```
-./celantur_sdk_example: error while loading shared libraries: libprocessing.so: cannot open shared object file: No such file or directory`
+error while loading shared libraries: libprocessing.so: cannot open shared object file
 ```
 
-#### Solution
-
-Add the library path to the linker paths:
+**Solution:** add the SDK library path:
 
 ```bash
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/
 ```
 
-Or edit the [runpath](https://blogs.oracle.com/solaris/post/changing-elf-runpaths-code-included).
+Alternatively, adjust the executable [runpath](https://blogs.oracle.com/solaris/post/changing-elf-runpaths-code-included).
 
 ## Additional settings
 
-By default, logging level is set to `INFO`. If you find it too verbose, you can change it to `WARNING` or `ERROR`. Here is an example how to set logging level to `WARNING`:
+Logging defaults to `INFO`. To reduce verbosity:
 
 ```bash
 export LOG_LEVEL=WARNING

@@ -53,9 +53,12 @@ inline std::filesystem::path output_file(const std::string& name) {
 }
 
 // Default processor configuration shared by the examples. Pass the inference plugin to use
-// (e.g. example::onnx_plugin): tiling with overlap, lowered thresholds for small classes, and a
-// per-object-type processing config that fully blurs people, rectangle-blurs license plates, and
-// detects (without blurring) vehicles and faces. See quickstart.cpp for a worked example.
+// (e.g. example::onnx_plugin). This sets up everything the examples have in common:
+//   - Tiling (2x2) with 10% overlap, for more robust detection at the cost of speed.
+//   - A region-of-interest covering the whole image.
+//   - Lowered thresholds for the small/hard classes (face, license plate).
+//   - A per-object-type processing config for people, license plates, vehicles and faces, showcasing
+//     the different BlurType / DetectionType options (see the per-class comments below).
 inline celantur::ProcessorParams make_processor_params(const std::filesystem::path& inference_plugin) {
     celantur::ProcessorParams params;
 

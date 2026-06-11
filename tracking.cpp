@@ -7,13 +7,24 @@
 #include <set>
 #include <tuple>
 
+/**
+    The purpose of this example is to show how to anonymise a video and improve the results with object
+    tracking, running on the GPU via TensorRT.
+
+    Tracking lets us keep anonymising objects for a few frames after the detector loses them (for example
+    when a person is briefly occluded). The flow is:
+      - Run detection on each frame with the Processor.
+      - Feed the detections to a Tracker, which maintains object identities across frames.
+      - For tracks the detector lost on this frame, anonymise them anyway using a separate Anonymiser
+        (here we also draw a green box around them purely for visualisation).
+ */
+
 const std::filesystem::path video_path = example::asset("video.mp4");
 const std::filesystem::path model_path = example::asset("v10-static-fp32-medium-640.onnx.enc");
 const std::filesystem::path model_path_compiled = example::asset("v10-static-fp32-medium-640.trt.enc");
 
-/**
-    The purpose of this example is to show how one can improve the detection results for videos with tracking
-*/
+// Read the input video frame by frame, anonymise each frame (re-anonymising lost tracks), and write the
+// result to an output video file.
 void process_video_with_tracking(CelanturSDK::Processor& processor, CelanturSDK::Tracker& tracker, CelanturSDK::Anonymiser& anonymiser) {
     const std::filesystem::path out_video_path = example::output_file("tracking.mp4");
     cv::VideoCapture cap(video_path.string());
@@ -23,7 +34,7 @@ void process_video_with_tracking(CelanturSDK::Processor& processor, CelanturSDK:
         return;
     }
 
-    // 2. Get properties from the source
+    // Match the output video properties to the source
     int frame_width  = static_cast<int>(cap.get(cv::CAP_PROP_FRAME_WIDTH));
     int frame_height = static_cast<int>(cap.get(cv::CAP_PROP_FRAME_HEIGHT));
     double fps       = cap.get(cv::CAP_PROP_FPS);
@@ -41,9 +52,8 @@ void process_video_with_tracking(CelanturSDK::Processor& processor, CelanturSDK:
     cv::Mat frame;
     int counter = 0;
 
-
     while (true) {
-        // 4. Read frame
+        // Read the next frame; stop at the end of the stream
         bool success = cap.read(frame);
         if (!success || frame.empty()) {
             std::cout << "End of stream." << std::endl;
@@ -55,8 +65,11 @@ void process_video_with_tracking(CelanturSDK::Processor& processor, CelanturSDK:
         processor.process(frame);
         cv::Mat anonymised_frame = processor.get_result();
         std::vector<celantur::CelanturDetection> dets = processor.get_detections();
+
+        // Update the tracker with this frame's detections so it can maintain object identities
         tracker.update(dets);
 
+        // Re-anonymise objects the detector lost on this frame but the tracker is still following
         auto lost_dets = tracker.get_lost_detections();
         for (const auto& det : lost_dets) {
             anonymiser.anonymise(anonymised_frame, det);
@@ -64,11 +77,10 @@ void process_video_with_tracking(CelanturSDK::Processor& processor, CelanturSDK:
             cv::rectangle(anonymised_frame, det.box, cv::Scalar(0, 255, 0), 2);
         }
 
-        // 5. Write frame to file
         writer.write(anonymised_frame);
     }
 
-    // 7. Cleanup (Release handles automatically on destruction, but good practice)
+    // Release handles explicitly. They would also be released on destruction, but this is good practice.
     cap.release();
     writer.release();
 
