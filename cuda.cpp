@@ -169,7 +169,7 @@ int main(int argc, char** argv) {
     params.inference_plugin_group = celantur::PluginGroup::GPUInferenceEngine;
 
     CelanturSDK::ModelCompiler compiler(example::license_file, params);
-    celantur::InferenceEnginePluginCompileSettings settings = compiler.preload_model(example::model_path);
+    celantur::InferenceEnginePluginCompileSettings settings = compiler.preload_model(example::onnx_file_path);
     std::cout << "Compile settings: " << settings << std::endl;
 
     settings["precision"] = celantur::CompilePrecision::FP32;

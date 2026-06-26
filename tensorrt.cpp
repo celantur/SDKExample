@@ -24,7 +24,7 @@ int main(int argc, char** argv) {
         CelanturSDK::ModelCompilerParams compiler_params;
         compiler_params.inference_plugin = example::tensorrt_plugin;
         CelanturSDK::ModelCompiler compiler(example::license_file, compiler_params);
-        celantur::InferenceEnginePluginCompileSettings settings = compiler.preload_model(example::model_path);
+        celantur::InferenceEnginePluginCompileSettings settings = compiler.preload_model(example::onnx_file_path);
 
         // Fast-compiling profile: FP32 precision and Low optimisation level.
         settings["precision"] = celantur::CompilePrecision::FP32;
@@ -49,13 +49,10 @@ int main(int argc, char** argv) {
     // Get the available inference engine settings and their default values
     // For the tensorRT plugin currently there are no additional settings but this may change in the future
     celantur::InferenceEnginePluginSettings settings = processor.get_inference_settings(model_path_compiled);
-    std::cout << "Inference engine parameters:" << std::endl;
-    for (const std::pair<std::string, std::any>& pair : settings) {
-        std::cout << pair.first  << std::endl;
-    }
+    example::print_inference_settings(settings);
 
     // Load the compiled inference model.
-    std::cout << "load model from " << example::model_path << std::endl;
+    std::cout << "load model from " << model_path_compiled << std::endl;
     processor.load_inference_model(settings);
 
     // Process the shared example image and save the result

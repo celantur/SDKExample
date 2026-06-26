@@ -1,5 +1,6 @@
 #pragma once
 
+#include <any>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -34,7 +35,7 @@ inline const std::filesystem::path output_path = exe_path / ".." / "output";
 // Assets shared by (almost) every example.
 inline const std::filesystem::path license_file = assets_path / "license";
 inline const std::filesystem::path image_path   = assets_path / "image.jpg";
-inline const std::filesystem::path model_path   = assets_path / "v10-static-fp32-medium-1280.onnx.enc";
+inline const std::filesystem::path onnx_file_path = assets_path / "v10-static-fp32-medium-1280.onnx.enc";
 
 // Inference plugins shipped with the SDK.
 inline const std::filesystem::path onnx_plugin     = "/usr/local/lib/libONNXInference.so";
@@ -131,6 +132,13 @@ inline celantur::ProcessorParams make_processor_params(const std::filesystem::pa
     );
 
     return params;
+}
+
+inline void print_inference_settings(const celantur::InferenceEnginePluginSettings& settings) {
+    std::cout << "Inference engine parameters:" << std::endl;
+    for (const std::pair<std::string, std::any>& pair : settings) {
+        std::cout << pair.first << std::endl;
+    }
 }
 
 // Run the processor over the shared example image and save the anonymised result under output_name.

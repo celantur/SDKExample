@@ -12,16 +12,16 @@ See the [installation guide](https://doc.celantur.com/sdk/requirements-and-insta
 
 ## Examples
 
-Start with [quickstart.cpp](quickstart.cpp), then explore the other examples as needed.
+Start with [onnx.cpp](onnx.cpp), then explore the other examples as needed.
 
 | Example | What it demonstrates |
 | --- | --- |
-| [quickstart.cpp](quickstart.cpp) | Minimal CPU anonymisation with the ONNX inference engine, plus tuning inference settings such as thread count and optimisation level. |
-| [jpeg.cpp](jpeg.cpp) | Full CPU workflow: JPEG decode/encode with EXIF preservation, detection visualisation, per-class counts, and metric serialisation. |
+| [onnx.cpp](onnx.cpp) | Minimal CPU anonymisation with the ONNX inference engine, plus tuning inference settings such as thread count and optimisation level. |
 | [openvino.cpp](openvino.cpp) | Compile and run a model with the OpenVINO CPU inference engine. |
 | [tensorrt.cpp](tensorrt.cpp) | Compile and run a model on GPU with TensorRT, including precision and optimisation level. |
-| [tracking.cpp](tracking.cpp) | Video processing with object tracking using a smaller model. |
 | [cuda.cpp](cuda.cpp) | Full GPU inference pipeline without copying image data back to the CPU. |
+| [tracking.cpp](tracking.cpp) | Video processing with object tracking using a smaller model. |
+| [jpeg.cpp](jpeg.cpp) | Full CPU workflow: JPEG decode/encode with EXIF preservation, detection visualisation, per-class counts, and metric serialisation. |
 
 Shared paths, processor defaults, and the common OpenCV image-processing helper live in [example_common.h](example_common.h).
 
@@ -63,7 +63,7 @@ If you were given custom models, update the model path in [example_common.h](exa
 After building, run the examples from `build/`:
 
 ```bash
-./quickstart
+./onnx
 ./jpeg
 ./openvino
 # ...
