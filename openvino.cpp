@@ -17,7 +17,7 @@ int main(int argc, char** argv) {
     const std::filesystem::path model_path_compiled = example::asset("v10-static-fp32-medium-1280.openvino.enc");
 
     // Small model variant: faster on CPU, requires a matching context size (see below).
-    // const std::filesystem::path model_path = example::asset("v8-static-fp32-small-640.onnx.enc");
+    // const std::filesystem::path onnx_file_path = example::asset("v8-static-fp32-small-640.onnx.enc");
     // const std::filesystem::path model_path_compiled = example::asset("v6-static-fp32-small-640.openvino");
     // constexpr int context_size = 640;
 
@@ -27,7 +27,7 @@ int main(int argc, char** argv) {
         CelanturSDK::ModelCompilerParams compiler_params;
         compiler_params.inference_plugin = example::openvino_plugin;
         CelanturSDK::ModelCompiler compiler(example::license_file, compiler_params);
-        celantur::InferenceEnginePluginCompileSettings settings = compiler.preload_model(example::model_path);
+        celantur::InferenceEnginePluginCompileSettings settings = compiler.preload_model(example::onnx_file_path);
 
         // Optionally, investigate/change something if you want to
         std::optional<int> num_threads = std::any_cast<std::optional<int> >(settings["num_threads"]);
@@ -54,13 +54,10 @@ int main(int argc, char** argv) {
 
     // Get the available inference engine settings and their default values
     celantur::InferenceEnginePluginSettings settings = processor.get_inference_settings(model_path_compiled);
-    std::cout << "Inference engine parameters:" << std::endl;
-    for (const std::pair<std::string, std::any>& pair : settings) {
-        std::cout << pair.first  << std::endl;
-    }
+    example::print_inference_settings(settings);
 
     // Load the compiled inference model.
-    std::cout << "load model from " << example::model_path << std::endl;
+    std::cout << "load model from " << model_path_compiled << std::endl;
     processor.load_inference_model(settings);
 
     // Small model variant: set the context size to match the model input size (640x640) and load

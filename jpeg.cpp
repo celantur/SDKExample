@@ -38,8 +38,8 @@ int main(int argc, char** argv) {
     CelanturSDK::Processor processor(params, example::license_file);
 
     // Load the inference model. Should be provided by Celantur
-    std::cout << "load model from " << example::model_path << std::endl;
-    celantur::InferenceEnginePluginSettings settings = processor.get_inference_settings(example::model_path);
+    std::cout << "load model from " << example::onnx_file_path << std::endl;
+    celantur::InferenceEnginePluginSettings settings = processor.get_inference_settings(example::onnx_file_path);
     processor.load_inference_model(settings);
 
     // We use the SDK's own JPEG decode/encode functions instead of OpenCV directly, as they let us
