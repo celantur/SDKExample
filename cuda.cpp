@@ -238,8 +238,6 @@ int main(int argc, char** argv) {
         stream
     );
 
-    cudaStreamSynchronize(stream);
-
     // execute asynchronous inference. The return value just says whether the inference was successfully queued.
     if (!engine.execute(d_input, stream)) {
         std::cerr << "Failed to execute inference" << std::endl;
@@ -248,6 +246,9 @@ int main(int argc, char** argv) {
 
     // Get the result. This function will return immediately, but the result will be available only after the inference is done. The result is a struct that contains pointers to the output tensors on the device, as well as their dimensions and the number of detections. You can either do postprocessing on the GPU using these pointers, or you can copy the results to the host and do postprocessing there. In this example we copy the results to the host for easier visualisation, but in a real application you probably want to do everything on the GPU.
     celantur::GPUInferenceResultDevice res = engine.get_result(stream);
+
+
+    // For the host transfer, wait for a synchronisation
     cudaStreamSynchronize(stream);
 
     // This is not important and just an example of how to extract the results and display them on the image.
