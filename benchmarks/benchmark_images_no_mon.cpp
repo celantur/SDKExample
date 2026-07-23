@@ -1,13 +1,16 @@
 #include "CelanturDetection.h"
 #include "CelanturSDKInterface.h"
 #include "CommonParameters.h"
+#include "ThreadSafeQueue.h"
 #include <filesystem>
 #include <opencv2/opencv.hpp>
 #include <boost/dll.hpp>
 #include <boost/program_options.hpp>
+#include <deque>
 #include <iostream>
 #include <memory>
 #include <string>
+#include <thread>
 #include <vector>
 #include <algorithm>
 
@@ -21,10 +24,11 @@ std::unique_ptr<CelanturSDK::Processor> create_processor() {
     const std::filesystem::path assets_path = std::filesystem::path(boost::dll::program_location().parent_path().string()) / ".." / ".." / "assets";
     const std::filesystem::path license  = assets_path / "license";
     const std::filesystem::path model    = assets_path / "v10-static-fp32-medium-1280.onnx.enc";
-    const std::filesystem::path prebuilt = assets_path / "v10-static-fp32-medium-1280-cuda.trt.enc";
+    const std::filesystem::path prebuilt = assets_path / "v10-static-fp32-medium-1280.trt.enc";
     const std::filesystem::path compiled = std::filesystem::exists(prebuilt)
         ? prebuilt : assets_path / "v10-static-fp32-medium-1280.trt";
-    const std::filesystem::path plugin   = "/usr/local/lib/libTensorRTRuntime.so";
+    // const std::filesystem::path plugin   = "/usr/local/lib/libTensorRTRuntime.so";
+    const std::filesystem::path plugin   = "/app/output/lib/libTensorRTRuntime.so";
 
     if (!std::filesystem::exists(compiled)) {
         CelanturSDK::ModelCompilerParams compiler_params;
@@ -81,6 +85,65 @@ bool is_image_file(const std::filesystem::path& p) {
     return std::find(IMAGE_EXTS.begin(), IMAGE_EXTS.end(), ext) != IMAGE_EXTS.end();
 }
 
+const size_t QUEUE_DEPTH = 1;
+
+struct ImageTask {
+    std::filesystem::path path;
+    cv::Mat image;
+    bool sentinel = false;
+};
+
+void reader_worker(
+    int worker_id,
+    int n_workers,
+    const std::vector<std::filesystem::path>& images,
+    ThreadSafeQueue<ImageTask>& to_process)
+{
+    for (size_t i = static_cast<size_t>(worker_id); i < images.size(); i += static_cast<size_t>(n_workers)) {
+        ImageTask task;
+        task.path  = images[i];
+        task.image = cv::imread(images[i].string());
+        to_process.push(std::move(task));
+    }
+
+    ImageTask end;
+    end.sentinel = true;
+    to_process.push(std::move(end));
+}
+
+void processor_worker(
+    ThreadSafeQueue<ImageTask>& to_process,
+    ThreadSafeQueue<ImageTask>& to_write,
+    CelanturSDK::Processor& processor)
+{
+    while (true) {
+        ImageTask task = to_process.pop();
+        if (task.sentinel) {
+            to_write.push(std::move(task));
+            break;
+        }
+
+        processor.process(std::move(task.image));
+        task.image = processor.get_result();
+        processor.get_detections();
+        to_write.push(std::move(task));
+    }
+}
+
+void writer_worker(
+    ThreadSafeQueue<ImageTask>& to_write,
+    const std::filesystem::path& output_dir)
+{
+    while (true) {
+        ImageTask task = to_write.pop();
+        if (task.sentinel)
+            break;
+
+        if (!output_dir.empty())
+            cv::imwrite((output_dir / task.path.filename()).string(), task.image);
+    }
+}
+
 } // namespace
 
 int main(int argc, char** argv) {
@@ -89,7 +152,7 @@ int main(int argc, char** argv) {
         ("help,h",   "Show this help message")
         ("input,i",  po::value<std::string>()->required(),          "Directory of images to process")
         ("output,o", po::value<std::string>()->default_value(""),   "Directory to write anonymised images (optional)")
-        ("n-proc,j", po::value<int>()->default_value(1),             "Number of parallel processors");
+        ("n-proc,j", po::value<int>()->default_value(1),             "Number of reader/processor/writer pipelines");
 
     po::variables_map vm;
     try {
@@ -138,31 +201,38 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    std::cout << "Found " << images.size() << " images. Setting up " << n_proc << " processor(s)...\n";
-    std::vector<std::unique_ptr<CelanturSDK::Processor>> processors;
-    processors.reserve(n_proc);
-    for (int i = 0; i < n_proc; ++i)
-        processors.push_back(create_processor());
-    std::cout << "Processors ready. Processing in batches of " << n_proc << "...\n";
+    std::cout << "Found " << images.size() << " images. Setting up processor...\n";
+    auto processor = create_processor();
 
-    for (size_t batch_start = 0; batch_start < images.size(); batch_start += n_proc) {
-        const size_t batch_end  = std::min(batch_start + static_cast<size_t>(n_proc), images.size());
-        const size_t batch_size = batch_end - batch_start;
-
-        std::vector<cv::Mat> batch_images(batch_size);
-        for (size_t i = 0; i < batch_size; ++i)
-            batch_images[i] = cv::imread(images[batch_start + i].string());
-
-        for (size_t i = 0; i < batch_size; ++i)
-            processors[i]->process(batch_images[i]);
-
-        for (size_t i = 0; i < batch_size; ++i) {
-            cv::Mat out = processors[i]->get_result();
-            processors[i]->get_detections();
-            if (!output_dir.empty())
-                cv::imwrite((output_dir / images[batch_start + i].filename()).string(), out);
-        }
+    std::deque<ThreadSafeQueue<ImageTask>> to_process;
+    std::deque<ThreadSafeQueue<ImageTask>> to_write;
+    for (int i = 0; i < n_proc; ++i) {
+        to_process.emplace_back(QUEUE_DEPTH);
+        to_write.emplace_back(QUEUE_DEPTH);
     }
+
+    std::cout << "Processors ready. Starting pipelines...\n";
+
+    std::vector<std::thread> readers;
+    std::vector<std::thread> processors_threads;
+    std::vector<std::thread> writers;
+    readers.reserve(n_proc);
+    processors_threads.reserve(n_proc);
+    writers.reserve(n_proc);
+
+    for (int i = 0; i < n_proc; ++i) {
+        readers.emplace_back(reader_worker, i, n_proc, std::cref(images), std::ref(to_process[i]));
+        processors_threads.emplace_back(
+            processor_worker, std::ref(to_process[i]), std::ref(to_write[i]), std::ref(*processor));
+        writers.emplace_back(writer_worker, std::ref(to_write[i]), output_dir);
+    }
+
+    for (auto& t : readers)
+        t.join();
+    for (auto& t : processors_threads)
+        t.join();
+    for (auto& t : writers)
+        t.join();
 
     std::cout << "Done. Processed " << images.size() << " images.\n";
     return 0;
