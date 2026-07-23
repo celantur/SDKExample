@@ -212,8 +212,10 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    std::cout << "Found " << images.size() << " images. Setting up processor...\n";
-    auto processor = create_processor(tiling);
+    std::cout << "Found " << images.size() << " images. Setting up " << n_proc << " processor(s)...\n";
+    std::vector<std::unique_ptr<CelanturSDK::Processor>> processors;
+    for (int i = 0; i < n_proc; ++i)
+        processors.push_back(create_processor(tiling));
 
     const size_t queue_depth = static_cast<size_t>(n_proc) * 2;
 
@@ -236,7 +238,7 @@ int main(int argc, char** argv) {
     for (int i = 0; i < n_proc; ++i) {
         readers.emplace_back(reader_worker, i, n_proc, std::cref(images), std::ref(to_process[i]));
         processors_threads.emplace_back(
-            processor_worker, std::ref(to_process[i]), std::ref(to_write[i]), std::ref(*processor));
+            processor_worker, std::ref(to_process[i]), std::ref(to_write[i]), std::ref(*processors[i]));
         writers.emplace_back(writer_worker, std::ref(to_write[i]), output_dir);
     }
 
