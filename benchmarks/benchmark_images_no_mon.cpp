@@ -85,8 +85,6 @@ bool is_image_file(const std::filesystem::path& p) {
     return std::find(IMAGE_EXTS.begin(), IMAGE_EXTS.end(), ext) != IMAGE_EXTS.end();
 }
 
-const size_t QUEUE_DEPTH = 1;
-
 struct ImageTask {
     std::filesystem::path path;
     cv::Mat image;
@@ -204,11 +202,13 @@ int main(int argc, char** argv) {
     std::cout << "Found " << images.size() << " images. Setting up processor...\n";
     auto processor = create_processor();
 
+    const size_t queue_depth = static_cast<size_t>(n_proc) * 2;
+
     std::deque<ThreadSafeQueue<ImageTask>> to_process;
     std::deque<ThreadSafeQueue<ImageTask>> to_write;
     for (int i = 0; i < n_proc; ++i) {
-        to_process.emplace_back(QUEUE_DEPTH);
-        to_write.emplace_back(QUEUE_DEPTH);
+        to_process.emplace_back(queue_depth);
+        to_write.emplace_back(queue_depth);
     }
 
     std::cout << "Processors ready. Starting pipelines...\n";
