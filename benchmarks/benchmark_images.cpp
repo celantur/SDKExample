@@ -26,8 +26,10 @@ std::unique_ptr<CelanturSDK::Processor> create_processor() {
     const std::filesystem::path assets_path = std::filesystem::path(boost::dll::program_location().parent_path().string()) / ".." / ".." / "assets";
     const std::filesystem::path license  = assets_path / "license";
     const std::filesystem::path model    = assets_path / "v10-static-fp32-medium-1280.onnx.enc";
-    const std::filesystem::path compiled = assets_path / "v10-static-fp32-medium-1280.openvino";
-    const std::filesystem::path plugin   = "/usr/local/lib/libOpenVINORuntime.so";
+    const std::filesystem::path prebuilt = assets_path / "v10-static-fp32-medium-1280-cuda.trt.enc";
+    const std::filesystem::path compiled = std::filesystem::exists(prebuilt)
+        ? prebuilt : assets_path / "v10-static-fp32-medium-1280.trt";
+    const std::filesystem::path plugin   = "/usr/local/lib/libTensorRTRuntime.so";
 
     if (!std::filesystem::exists(compiled)) {
         CelanturSDK::ModelCompilerParams compiler_params;
@@ -35,10 +37,10 @@ std::unique_ptr<CelanturSDK::Processor> create_processor() {
         CelanturSDK::ModelCompiler compiler(license, compiler_params);
         celantur::InferenceEnginePluginCompileSettings compile_settings = compiler.preload_model(model);
 
-        // Optional: override thread count (default: auto-detected)
-        // compile_settings["num_threads"] = std::optional<int>(4);
+        compile_settings["precision"] = celantur::CompilePrecision::FP32;
+        compile_settings["optimisation_level"] = celantur::OptimisationLevel::Low;
 
-        std::cout << "Compiling OpenVINO model to " << compiled << "...\n";
+        std::cout << "Compiling TensorRT model to " << compiled << "...\n";
         compiler.compile_model(compile_settings, compiled);
     }
 
