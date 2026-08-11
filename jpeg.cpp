@@ -32,6 +32,9 @@ int main(int argc, char** argv) {
     // processing config). See example::make_processor_params in example_common.h for the details.
     celantur::ProcessorParams params = example::make_processor_params(example::onnx_plugin);
 
+    // When using celantur load function, image is already in RGB, so no swap is needed.
+    params.swapRB = false;
+
     std::cout << "Looking for license at " << example::license_file << std::endl;
 
     // Start the processor with given parameters and license file
