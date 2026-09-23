@@ -14,7 +14,7 @@
  */
 
 int main(int argc, char** argv) {
-    const std::filesystem::path model_path_compiled = example::asset("v10-static-fp32-medium-1280.openvino.enc");
+    const std::filesystem::path model_path_compiled = example::asset("v11-static-fp32-medium-1280.openvino.enc");
 
     // Small model variant: faster on CPU, requires a matching context size (see below).
     // const std::filesystem::path onnx_file_path = example::asset("v8-static-fp32-small-640.onnx.enc");

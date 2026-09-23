@@ -7,7 +7,7 @@
 #include <cuda_runtime.h>
 #include <opencv2/opencv.hpp>
 
-const std::filesystem::path model_path_compiled = example::asset("v10-static-fp32-medium-1280-cuda.trt.enc");
+const std::filesystem::path model_path_compiled = example::asset("v11-static-fp32-medium-1280-cuda.trt.enc");
 
 /**
     The purpose of this example is to show how to run inference fully on the GPU using the low-level
