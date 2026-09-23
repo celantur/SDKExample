@@ -36,7 +36,9 @@ cmake --build build/
 ```
 
 If you receive the error
-> `CppProcessing` is not found
+> By not providing "FindCppProcessing.cmake" in CMAKE_MODULE_PATH this
+> project has asked CMake to find a package configuration file provided by
+> "CppProcessing", but CMake did not find one.
 
 ... run:
 
