@@ -36,9 +36,9 @@ cmake --build build/
 ```
 
 If you receive the error
-> `CppProcessing` is not found"
+> `CppProcessing` is not found
 
-run
+... run:
 
 ```bash
 cmake -S . -B build/ -DCppProcessing_DIR=/usr/local/lib/cmake
@@ -82,7 +82,7 @@ After building, run the examples from `build/`:
 If you get
 > error while loading shared libraries: libprocessing.so: cannot open shared object file
 
-Add the SDK library path:
+... add the SDK library path:
 
 ```bash
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/
