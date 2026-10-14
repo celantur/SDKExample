@@ -21,6 +21,8 @@ Start with [onnx.cpp](onnx.cpp), then explore the other examples as needed.
 | [tensorrt.cpp](tensorrt.cpp) | Compile and run a model on GPU with TensorRT, including precision and optimisation level. |
 | [cuda.cpp](cuda.cpp) | Full GPU inference pipeline without copying image data back to the CPU. |
 | [tracking.cpp](tracking.cpp) | Video processing with object tracking using a smaller model. |
+| [video_ffmpeg.cpp](video_ffmpeg.cpp) | HEVC video anonymisation with FFmpeg decode/encode (`hevc`/`hevc_cuvid` + `libx265`/`hevc_nvenc`) and TensorRT inference. |
+| [video_opencv.cpp](video_opencv.cpp) | Same H.265→H.265 + TensorRT flow via OpenCV I/O; codecs come from OpenCV/FFmpeg (or `OPENCV_FFMPEG_*` env vars), with per-stage timing. |
 | [jpeg.cpp](jpeg.cpp) | Full CPU workflow: JPEG decode/encode with EXIF preservation, detection visualisation, per-class counts, and metric serialisation. |
 
 Shared paths, processor defaults, and the common OpenCV image-processing helper live in [example_common.h](example_common.h).
@@ -55,8 +57,33 @@ Copy the required files into `assets/`:
 | `license` | License file |
 | `v10-static-fp32-medium-1280.onnx.enc` | Encrypted model (default in the examples) |
 | `image.jpg` | Test image |
+| `vid_h265.h265` | Raw HEVC test video (for `video_ffmpeg`) |
 
 If you were given custom models, update the model path in [example_common.h](example_common.h) or in the relevant example source file.
+
+### `video_ffmpeg` extras
+
+`video_ffmpeg` needs FFmpeg development libraries (`libavcodec`, `libavformat`, `libavutil`, `libswscale`) at build time, and a runtime FFmpeg build that provides the codecs you select. Output is a raw `.h265` blob named `{input_stem}_{decoder}_{encoder}.h265` under `output/`.
+
+```bash
+# CPU path -> output/vid_h265_hevc_libx265.h265
+./video_ffmpeg --decoder hevc --encoder libx265
+
+# NVIDIA hardware path -> output/vid_h265_hevc_cuvid_hevc_nvenc.h265
+./video_ffmpeg --decoder hevc_cuvid --encoder hevc_nvenc
+```
+
+### `video_opencv`
+
+Uses OpenCV `VideoCapture` / `VideoWriter` (FFmpeg backend) for H.265→H.265. No codec CLI flags — OpenCV picks the libraries; optional:
+
+```bash
+export OPENCV_FFMPEG_CAPTURE_OPTIONS="hwaccel;cuda"
+export OPENCV_FFMPEG_WRITER_OPTIONS="preset;medium|crf;23"
+./video_opencv   # -> output/vid_h265_opencv.h265
+```
+
+Prints decode / SDK process / encode wall times and FPS.
 
 ### Executables
 

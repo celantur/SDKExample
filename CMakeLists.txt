@@ -22,6 +22,32 @@ target_link_libraries(tensorrt PRIVATE CppProcessing::CelanturSDK CppProcessing:
 add_executable(tracking tracking.cpp)
 target_link_libraries(tracking PRIVATE CppProcessing::CelanturSDK CppProcessing::common-module)
 
+# Video anonymisation with FFmpeg decode/encode (CPU libx265 and/or NVIDIA hevc_cuvid/hevc_nvenc).
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(FFMPEG REQUIRED IMPORTED_TARGET
+    libavcodec
+    libavformat
+    libavutil
+    libswscale
+)
+add_executable(video_ffmpeg video_ffmpeg.cpp)
+target_link_libraries(video_ffmpeg
+    PRIVATE
+        CppProcessing::CelanturSDK
+        CppProcessing::common-module
+        Boost::program_options
+        PkgConfig::FFMPEG
+)
+
+# Video anonymisation with OpenCV decode/encode (codec backend via OpenCV/FFmpeg / env vars).
+add_executable(video_opencv video_opencv.cpp)
+target_link_libraries(video_opencv
+    PRIVATE
+        CppProcessing::CelanturSDK
+        CppProcessing::common-module
+        Boost::program_options
+)
+
 # GPU inference
 find_package(CUDAToolkit)
 
