@@ -39,14 +39,6 @@ target_link_libraries(video_ffmpeg
         PkgConfig::FFMPEG
 )
 
-# Video anonymisation with OpenCV decode/encode (codec backend via OpenCV/FFmpeg / env vars).
-add_executable(video_opencv video_opencv.cpp)
-target_link_libraries(video_opencv
-    PRIVATE
-        CppProcessing::CelanturSDK
-        CppProcessing::common-module
-        Boost::program_options
-)
 
 # GPU inference
 find_package(CUDAToolkit)

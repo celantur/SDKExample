@@ -38,14 +38,9 @@ inline const std::filesystem::path image_path   = assets_path / "image.jpg";
 inline const std::filesystem::path onnx_file_path = assets_path / "v10-static-fp32-medium-1280.onnx.enc";
 
 // Inference plugins shipped with the SDK.
-// Dev-container layout (build/install tree under /app/output):
-inline const std::filesystem::path onnx_plugin     = "/app/output/lib/libONNXInference.so";
-inline const std::filesystem::path openvino_plugin = "/app/output/lib/libOpenVINORuntime.so";
-inline const std::filesystem::path tensorrt_plugin = "/app/output/lib/libTensorRTRuntime.so";
-// Packaged SDK install layout:
-// inline const std::filesystem::path onnx_plugin     = "/usr/local/lib/libONNXInference.so";
-// inline const std::filesystem::path openvino_plugin = "/usr/local/lib/libOpenVINORuntime.so";
-// inline const std::filesystem::path tensorrt_plugin = "/usr/local/lib/libTensorRTRuntime.so";
+inline const std::filesystem::path onnx_plugin     = "/usr/local/lib/libONNXInference.so";
+inline const std::filesystem::path openvino_plugin = "/usr/local/lib/libOpenVINORuntime.so";
+inline const std::filesystem::path tensorrt_plugin = "/usr/local/lib/libTensorRTRuntime.so";
 
 // Resolve an asset path by file name, e.g. example::asset("v6-static-fp32.onnx.enc").
 inline std::filesystem::path asset(const std::string& name) {

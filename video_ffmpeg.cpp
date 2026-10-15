@@ -426,7 +426,7 @@ struct VideoIO {
 };
 
 CelanturSDK::Processor make_tensorrt_processor() {
-    const std::filesystem::path model_path_compiled = example::asset("v10-static-fp16-medium-1280.trt.enc");
+    const std::filesystem::path model_path_compiled = example::asset("v11-static-fp16-medium-1280.trt.enc");
 
     if (!std::filesystem::exists(model_path_compiled)) {
         CelanturSDK::ModelCompilerParams compiler_params;
