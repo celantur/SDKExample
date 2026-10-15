@@ -20,8 +20,8 @@
  */
 
 const std::filesystem::path video_path = example::asset("video.mp4");
-const std::filesystem::path model_path = example::asset("v10-static-fp32-medium-640.onnx.enc");
-const std::filesystem::path model_path_compiled = example::asset("v10-static-fp32-medium-640.trt.enc");
+const std::filesystem::path model_path = example::asset("v11-static-fp32-medium-640.onnx.enc");
+const std::filesystem::path model_path_compiled = example::asset("v11-static-fp32-medium-640.trt.enc");
 
 // Read the input video frame by frame, anonymise each frame (re-anonymising lost tracks), and write the
 // result to an output video file.
@@ -41,6 +41,7 @@ void process_video_with_tracking(CelanturSDK::Processor& processor, CelanturSDK:
 
     cv::VideoWriter writer(out_video_path.string(),
                            cv::VideoWriter::fourcc('M','J','P','G'),
+                           // cv::VideoWriter::fourcc('a','v','c','1'),   // Encode h.264
                            fps,
                            cv::Size(frame_width, frame_height));
 

@@ -22,10 +22,9 @@ Start with [onnx.cpp](onnx.cpp), then explore the other examples as needed.
 | [cuda.cpp](cuda.cpp) | Full GPU inference pipeline without copying image data back to the CPU. |
 | [tracking.cpp](tracking.cpp) | Video processing with object tracking using a smaller model. |
 | [video_ffmpeg.cpp](video_ffmpeg.cpp) | HEVC video anonymisation with FFmpeg decode/encode (`hevc`/`hevc_cuvid` + `libx265`/`hevc_nvenc`) and TensorRT inference. |
-| [video_opencv.cpp](video_opencv.cpp) | Same H.265→H.265 + TensorRT flow via OpenCV I/O; codecs come from OpenCV/FFmpeg (or `OPENCV_FFMPEG_*` env vars), with per-stage timing. |
 | [jpeg.cpp](jpeg.cpp) | Full CPU workflow: JPEG decode/encode with EXIF preservation, detection visualisation, per-class counts, and metric serialisation. |
 
-Shared paths, processor defaults, and the common OpenCV image-processing helper live in [example_common.h](example_common.h).
+Shared paths, processor defaults, and the common OpenCV image-processing helper live in [`example_common.h`](example_common.h).
 
 ## Building
 
@@ -35,6 +34,17 @@ The easiest way to build the examples is with CMake:
 mkdir -p build/
 cmake -S . -B build/
 cmake --build build/
+```
+
+If you receive the error
+> By not providing "FindCppProcessing.cmake" in CMAKE_MODULE_PATH this
+> project has asked CMake to find a package configuration file provided by
+> "CppProcessing", but CMake did not find one.
+
+... run:
+
+```bash
+cmake -S . -B build/ -DCppProcessing_DIR=/usr/local/lib/cmake
 ```
 
 To link the SDK in your own project:
@@ -55,11 +65,12 @@ Copy the required files into `assets/`:
 | File | Purpose |
 | --- | --- |
 | `license` | License file |
-| `v10-static-fp32-medium-1280.onnx.enc` | Encrypted model (default in the examples) |
+| `v11-static-fp32-medium-1280.onnx.enc` | Encrypted model (default in the examples) |
 | `image.jpg` | Test image |
 | `vid_h265.h265` | Raw HEVC test video (for `video_ffmpeg`) |
+| `video.mp4` | Test video for `tracking.cpp` |
 
-If you were given custom models, update the model path in [example_common.h](example_common.h) or in the relevant example source file.
+If you were given custom models, update the model path in [`example_common.h`](example_common.h) or in the relevant example source file.
 
 ### `video_ffmpeg` extras
 
@@ -96,36 +107,17 @@ After building, run the examples from `build/`:
 # ...
 ```
 
-## Troubleshooting
+If you get
+> error while loading shared libraries: libprocessing.so: cannot open shared object file
 
-### `CppProcessing` is not found
-
-```
-CMake Error at CMakeLists.txt:10 (find_package):
-  By not providing "FindCppProcessing.cmake" in CMAKE_MODULE_PATH this
-  project has asked CMake to find a package configuration file provided by
-  "CppProcessing", but CMake did not find one.
-```
-
-**Solution:** point CMake at the SDK config directory:
-
-```bash
-cmake -S . -B build/ -DCppProcessing_DIR=/usr/local/lib/cmake
-```
-
-### Error loading shared libraries
-
-```
-error while loading shared libraries: libprocessing.so: cannot open shared object file
-```
-
-**Solution:** add the SDK library path:
+... add the SDK library path:
 
 ```bash
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/
 ```
 
 Alternatively, adjust the executable [runpath](https://blogs.oracle.com/solaris/post/changing-elf-runpaths-code-included).
+
 
 ## Additional settings
 

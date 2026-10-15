@@ -16,7 +16,7 @@
  */
 
 int main(int argc, char** argv) {
-    const std::filesystem::path model_path_compiled = example::asset("v10-static-fp32-medium-1280.trt.enc");
+    const std::filesystem::path model_path_compiled = example::asset("v11-static-fp32-medium-1280.trt.enc");
 
     // First, compile tensor rt model if it does not exist
     if (!std::filesystem::exists(model_path_compiled)) {
