@@ -88,7 +88,11 @@ inline celantur::ProcessorParams make_processor_params(const std::filesystem::pa
     params.thresholds = thresholds;
 
     // Configure per-object-type processing. Each DetectionProcessingConfig is initialised positionally:
-    //   { blur_type, gradient_start, gradient_stop, kernel_size, beautify_blur, detection_type }
+    // {
+    //   blur_type,
+    //   gradient_start, gradient_stop, kernel_size, beautify_blur,
+    //   detection_type
+    // }
     // Use BlurType::None together with a DetectionType to detect a class without anonymising it.
     params.per_type_processing_config = celantur::PerTypeProcessingConfig(
         {
@@ -96,7 +100,7 @@ inline celantur::ProcessorParams make_processor_params(const std::filesystem::pa
             {
                 celantur::CelanturClassId::Person,
                 celantur::DetectionProcessingConfig {
-                    celantur::BlurType::None,
+                    celantur::BlurType::Segmentation,
                     0.3f, 0.0f, 0.2f, false,
                     celantur::DetectionType::Segmentation,
                 }
@@ -110,7 +114,7 @@ inline celantur::ProcessorParams make_processor_params(const std::filesystem::pa
                     celantur::DetectionType::BBox,
                 }
             },
-            // Vehicle: detected only (no blur) using a segmentation mask.
+            // Vehicle: detect segmentation mask only (no blur).
             {
                 celantur::CelanturClassId::Vehicle,
                 celantur::DetectionProcessingConfig {
@@ -119,7 +123,7 @@ inline celantur::ProcessorParams make_processor_params(const std::filesystem::pa
                     celantur::DetectionType::Segmentation,
                 }
             },
-            // Face: detected only (no blur) using a bounding box.
+            // Face: blur oval shape inside the bounding box.
             {
                 celantur::CelanturClassId::Face,
                 celantur::DetectionProcessingConfig {
